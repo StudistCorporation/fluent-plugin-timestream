@@ -1,0 +1,31 @@
+<source>
+  @type tail
+  format ltsv
+  path /path/to/sample.log
+  pos_file /tmp/sample.pos
+  tag "sample.log"
+</source>
+
+<match sample.log>
+  @type timestream
+
+  database "sampleDB"
+  table "sampleTable"
+  region "us-east-1"
+
+  # <aws_credentials>
+  #   access_key_id "XXXXXXXXX"
+  #   secret_access_key "XXXXXXXXXX"
+  # </aws_credentials>
+
+  #<measure>
+  #  name "measureNameXXX"
+  #  type "VARCHAR"
+  #</measure>
+
+  # Timestream currently accept less or equal to 100 records
+  <buffer>
+    chunk_limit_records 100
+  </buffer>
+
+</match>
