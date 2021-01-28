@@ -1,43 +1,55 @@
-# Fluent::Plugin::Timestream
+# fluent-plugin-timestream
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/fluent/plugin/timestream`. To experiment with that code, run `bin/console` for an interactive prompt.
+Fluentd output plugin for Amazon Timestream.
 
-TODO: Delete this and the text above, and describe your gem
 
 ## Installation
+You can install it as follows:
 
-Add this line to your application's Gemfile:
+    $ fluent-gem install fluent-plugin-timestream
 
-```ruby
-gem 'fluent-plugin-timestream'
+## Configuration
+
 ```
+<source>
+  @type tail
+  format ltsv
+  path /path/to/sample.log
+  pos_file /tmp/sample.pos
+  tag "sample.log"
+</source>
 
-And then execute:
+<match sample.log>
+  @type timestream
 
-    $ bundle install
+  database "sampleDB"
+  table "sampleTable"
+  region "us-east-1"
 
-Or install it yourself as:
+  # <aws_credentials>
+  #   access_key_id "XXXXXXXXX"
+  #   secret_access_key "XXXXXXXXXX"
+  # </aws_credentials>
 
-    $ gem install fluent-plugin-timestream
+  # Specify which key should be 'measure'.
+  # If not, plugin sends dummy measure and writes all keys and values as dimensions.
+  # Dummy measure is as follows:
+  #   MeasureName: '-'
+  #   MeasureValue: '-'
+  #   MeasureValueType: 'VARCHAR'
+  #<measure>
+  #  name "measureNameXXX"
+  #  type "VARCHAR"
+  #</measure>
 
-## Usage
+  # 'chunk_limit_records' must be configured less or equal to 100.
+  # If not, plugin may fails to write record.
+  # For now, Plugin sends records in buffer all at once.
+  # However Amazon Timestream currently accepts less or equal to 100 records.
 
-TODO: Write usage instructions here
+  <buffer>
+    chunk_limit_records 100
+  </buffer>
 
-## Development
-
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
-
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
-
-## Contributing
-
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/fluent-plugin-timestream. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/[USERNAME]/fluent-plugin-timestream/blob/master/CODE_OF_CONDUCT.md).
-
-## License
-
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
-
-## Code of Conduct
-
-Everyone interacting in the Fluent::Plugin::Timestream project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/fluent-plugin-timestream/blob/master/CODE_OF_CONDUCT.md).
+</match>
+```
