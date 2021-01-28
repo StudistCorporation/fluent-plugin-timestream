@@ -1,30 +1,35 @@
-require "webrick/https"
-require "net/empty_port"
+# frozen_string_literal: true
+
+require 'webrick/https'
+require 'net/empty_port'
 
 class TestServer
+  # rubocop: disable Metrics/MethodLength
   def initialize
     @server = silence_stderr do
       WEBrick::HTTPServer.new(
-        ServerName: "localhost",
+        ServerName: 'localhost',
         Port: port,
         SSLEnable: true,
         SSLCertName: [%w[CN localhost]],
-        Logger: WEBrick::Log.new(File.open(File::NULL, "w")),
+        Logger: WEBrick::Log.new(File.open(File::NULL, 'w')),
         AccessLog: []
       )
     end
 
-    @server.mount_proc "/" do |req, res|
+    @server.mount_proc '/' do |req, res|
       @request_body = req.body
       res.status = 200
-      res.body = "RESPONSE"
+      res.body = 'RESPONSE'
     end
   end
+  # rubocop: enable Metrics/MethodLength
 
   def silence_stderr
-    $stderr = File.new("/dev/null", "w")
+    original_stderr = $stderr
+    $stderr = File.new('/dev/null', 'w')
     ret = yield
-    $stdout = STDERR
+    $stdout = original_stderr
     ret
   end
 
@@ -41,11 +46,14 @@ class TestServer
   def request_records
     return [] if request_body.empty?
 
-    request_body["Records"]
+    request_body['Records']
   end
 
   def start
-    trap "INT" do @server.shutdown end
+    trap 'INT' do
+      @server.shutdown
+    end
+
     Thread.new do
       @server.start
     end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
-require "bundler/gem_tasks"
-require "rake/testtask"
+
+require 'bundler/gem_tasks'
+require 'rake/testtask'
 
 Rake::TestTask.new(:test) do |test|
   test.libs << 'lib' << 'test'
@@ -8,4 +9,4 @@ Rake::TestTask.new(:test) do |test|
   test.verbose = true
 end
 
-task :default => [:build]
+task default: [:build]
