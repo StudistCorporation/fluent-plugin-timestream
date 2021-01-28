@@ -1,13 +1,41 @@
 AllCops:
   TargetRubyVersion: 2.6
 
-Style/StringLiterals:
+Style/FrozenStringLiteralComment:
   Enabled: true
-  EnforcedStyle: double_quotes
 
-Style/StringLiteralsInInterpolation:
-  Enabled: true
-  EnforcedStyle: double_quotes
+Style/RedundantReturn:
+  Enabled: false
+
+Style/NegatedIf:
+  Enabled: false
+
+Style/AsciiComments:
+  Enabled: false
+
+Layout/EmptyLinesAroundClassBody:
+  Enabled: false
+
+Layout/EmptyLinesAroundModuleBody:
+  Enabled: false
+
+Layout/IndentationConsistency:
+   EnforcedStyle: indented_internal_methods
+
+Style/ClassAndModuleChildren:
+  Enabled: false
+
+Metrics/BlockLength:
+  Exclude:
+    - 'test/*.rb'
+    - 'test/**/*.rb'
+    - 'test/**/**/*.rb'
 
 Layout/LineLength:
-  Max: 120
+  Max: 90
+
+Style/AndOr:
+  EnforcedStyle: conditionals
+
+Layout/EmptyLineAfterGuardClause:
+  Enabled: false
