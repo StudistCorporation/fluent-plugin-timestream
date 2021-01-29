@@ -8,4 +8,4 @@ You can install it as follows:
     $ fluent-gem install fluent-plugin-timestream
 
 ## Configuration
-Please refer to the [sample config file][https://github.com/StudistCorporation/fluent-plugin-timestream/blob/main/fluent.conf.sample]
+Please refer to the [sample config file](https://github.com/StudistCorporation/fluent-plugin-timestream/blob/main/fluent.conf.sample)
