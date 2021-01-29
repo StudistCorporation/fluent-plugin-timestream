@@ -49,6 +49,27 @@ class TimestreamOutputTest < Test::Unit::TestCase
     verify_requested_record(records[2], time3, dimensions)
   end
 
+  test 'multi records(not sorted by time)' do
+    d = create_driver
+    time1 = event_time('2021-01-01 01:00:00 UTC')
+    time2 = event_time('2021-01-03 03:00:00 UTC')
+    time3 = event_time('2021-01-02 02:00:00 UTC')
+
+    d.run(default_tag: 'test') do
+      d.feed(time1, create_log(key_base: KEY, value_base: VALUE, dimension_num: 3))
+      d.feed(time2, create_log(key_base: KEY, value_base: VALUE, dimension_num: 3))
+      d.feed(time3, create_log(key_base: KEY, value_base: VALUE, dimension_num: 3))
+    end
+
+    records = @server.request_records
+    assert_equal 3, records.length
+
+    dimensions = create_dimensions(key_base: KEY, value_base: VALUE, dimension_num: 3)
+    verify_requested_record(records[0], time1, dimensions)
+    verify_requested_record(records[1], time2, dimensions)
+    verify_requested_record(records[2], time3, dimensions)
+  end
+
   test "with measure" do
     measure_name = "key2"
     d = create_driver(default_config + 
@@ -66,6 +87,35 @@ class TimestreamOutputTest < Test::Unit::TestCase
 
     dimensions = create_dimensions(key_base: KEY, value_base: VALUE, dimension_num: 2)
     verify_requested_record(records[0], time, dimensions, measure_name: measure_name, measure_value: "value2")
+  end
+
+  test 'with measure(INTEGER)' do
+    measure_name = 'measure'
+    measure_value_type = 'INTEGER'
+    measure_value = '1000'
+
+    d = create_driver(default_config +
+      "<measure>
+        name #{measure_name}
+        type #{measure_value_type}
+      </measure>")
+
+    time = event_time('2021-01-01 11:11:11 UTC')
+
+    d.run(default_tag: 'test') do
+      log = create_log(key_base: KEY, value_base: VALUE, dimension_num: 2)
+      log[measure_name] = measure_value
+      d.feed(time, log)
+    end
+
+    records = @server.request_records
+    assert_equal 1, records.length
+
+    dimensions = create_dimensions(key_base: KEY, value_base: VALUE, dimension_num: 2)
+    verify_requested_record(records[0], time, dimensions,
+                            measure_name: measure_name,
+                            measure_value: measure_value,
+                            measure_value_type: measure_value_type)
   end
 
   private
