@@ -15,7 +15,7 @@ class TimestreamOutputTest < Test::Unit::TestCase
     @server.start
   end
 
-  test 'one record' do
+  test 'single record' do
     d = create_driver
     time = event_time('2021-01-01 11:11:11 UTC')
     d.run(default_tag: 'test') do
@@ -92,28 +92,20 @@ class TimestreamOutputTest < Test::Unit::TestCase
     # rubocop: enable Metrics/ParameterLists
 
     def create_log(key_base:, value_base:, dimension_num: 1)
-      log = {}
-      dimension_num.times do |i|
+      (0...dimension_num).each_with_object({}) do |i, log|
         log["#{key_base}#{i}"] = "#{value_base}#{i}"
       end
-      log
     end
 
-    # rubocop: disable Metrics/MethodLength
     def create_dimensions(key_base:, value_base:, dimension_num: 1)
-      dimensions = []
-      dimension_num.times do |i|
-        dimensions.push(
-          {
-            'DimensionValueType' => 'VARCHAR',
-            'Name' => "#{key_base}#{i}",
-            'Value' => "#{value_base}#{i}"
-          }
-        )
+      (0...dimension_num).map do |i|
+        {
+          'DimensionValueType' => 'VARCHAR',
+          'Name' => "#{key_base}#{i}",
+          'Value' => "#{value_base}#{i}"
+        }
       end
-      dimensions
     end
-    # rubocop: enable Metrics/MethodLength
 
     def default_config
       %(

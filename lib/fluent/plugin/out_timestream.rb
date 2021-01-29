@@ -69,7 +69,7 @@ module Fluent
         }
       end
 
-      def create_timstream_dimension(key, value)
+      def create_timestream_dimension(key, value)
         {
           dimension_value_type: 'VARCHAR',
           name: key,
@@ -85,7 +85,7 @@ module Fluent
             measure = { name: k, value: v, type: @target_measure[:type] }
             next
           end
-          dimensions.push(create_timstream_dimension(k, v))
+          dimensions.push(create_timestream_dimension(k, v))
         end
         return [dimensions, measure]
       end
