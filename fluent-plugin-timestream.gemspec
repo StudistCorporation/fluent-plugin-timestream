@@ -22,11 +22,11 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.required_ruby_version = '>= 2.6.3'
-  spec.add_dependency 'aws-sdk-timestreamwrite', '>=1.2.0'
-  spec.add_dependency 'fluentd', '>= 1.12.0'
+  spec.required_ruby_version = ">= 2.6.3"
+  spec.add_dependency "aws-sdk-timestreamwrite", ">=1.2.0"
+  spec.add_dependency "fluentd", ">= 1.11.0"
 
-  spec.add_development_dependency 'net-empty_port', '>= 0.0.2'
-  spec.add_development_dependency 'test-unit', '>= 3.3.9'
-  spec.add_development_dependency 'webrick', '>= 1.4.2'
+  spec.add_development_dependency "net-empty_port", ">= 0.0.2"
+  spec.add_development_dependency "test-unit", ">= 3.3.9"
+  spec.add_development_dependency "webrick", ">= 1.4.2"
 end
