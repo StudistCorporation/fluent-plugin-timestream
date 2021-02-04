@@ -28,7 +28,7 @@ class TimestreamOutputTest < Test::Unit::TestCase
     verify_requested_record(records[0], time, dimensions)
   end
 
-  test 'multi records' do
+  test 'multiple records' do
     d = create_driver
     time1 = event_time('2021-01-01 01:00:00 UTC')
     time2 = event_time('2021-01-02 02:00:00 UTC')

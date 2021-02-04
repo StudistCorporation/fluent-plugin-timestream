@@ -26,10 +26,9 @@ class TestServer
   # rubocop: enable Metrics/MethodLength
 
   def silence_stderr
-    original_stderr = $stderr
     $stderr = File.new('/dev/null', 'w')
     ret = yield
-    $stdout = original_stderr
+    $stderr = STDERR
     ret
   end
 
@@ -50,9 +49,7 @@ class TestServer
   end
 
   def start
-    trap 'INT' do
-      @server.shutdown
-    end
+    trap('INT') { @server.shutdown }
 
     Thread.new do
       @server.start
