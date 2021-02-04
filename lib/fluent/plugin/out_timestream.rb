@@ -12,11 +12,8 @@ module Fluent
 
       config_param :region, :string
 
-      config_section :aws_credentials,
-                     param_name: 'aws_credentials', required: false, multi: false do
-        config_param :access_key_id, :string, secret: true
-        config_param :secret_access_key, :string, secret: true
-      end
+      config_param :aws_key_id, :string, secret: true, default: nil
+      config_param :aws_sec_key, :string, secret: true, default: nil
 
       config_param :database, :string
       config_param :table, :string
@@ -39,10 +36,10 @@ module Fluent
       end
 
       def credential_options
-        if @aws_credentials
+        if @aws_key_id && @aws_sec_key
           {
-            access_key_id: @aws_credentials[:access_key_id],
-            secret_access_key: @aws_credentials[:secret_access_key]
+            access_key_id: @aws_key_id,
+            secret_access_key: @aws_sec_key
           }
         else
           {}
