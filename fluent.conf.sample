@@ -37,7 +37,7 @@
 
   # 'chunk_limit_records' must be configured less or equal to 100.
   # If not, plugin may fails to write record.
-  # For now, Plugin sends records in buffer all at once.
+  # For now, plugin sends records in buffer all at once.
   # However Amazon Timestream currently accepts less or equal to 100 records.
   <buffer>
     chunk_limit_records 100
