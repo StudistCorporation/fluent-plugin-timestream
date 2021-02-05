@@ -22,6 +22,8 @@ class TestServer
       res.status = 200
       res.body = 'RESPONSE'
     end
+
+    @request_body = ''
   end
   # rubocop: enable Metrics/MethodLength
 
@@ -37,7 +39,7 @@ class TestServer
   end
 
   def request_body
-    return {} if @request_body.empty?
+    return {} if @request_body.nil? || @request_body.empty?
 
     JSON.parse(@request_body)
   end

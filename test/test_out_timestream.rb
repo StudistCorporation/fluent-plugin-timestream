@@ -15,16 +15,65 @@ class TimestreamOutputTest < Test::Unit::TestCase
     @server.start
   end
 
-  test 'single record' do
+  test 'single record(STRING)' do
     d = create_driver
     time = event_time('2021-01-01 11:11:11 UTC')
+    log = { 'key' => 'value' }
     d.run(default_tag: 'test') do
-      d.feed(time, create_log(key_base: KEY, value_base: VALUE, dimension_num: 3))
+      d.feed(time, log)
     end
 
     records = @server.request_records
     assert_equal 1, records.length
-    dimensions = create_dimensions(key_base: KEY, value_base: VALUE, dimension_num: 3)
+    dimensions = create_expected_dimensions(log)
+    verify_requested_record(records[0], time, dimensions)
+  end
+
+  test 'single record(INTEGER)' do
+    d = create_driver
+    time = event_time('2021-01-01 11:11:11 UTC')
+    log = { 'key' => 1000 }
+    d.run(default_tag: 'test') do
+      d.feed(time, log)
+    end
+
+    records = @server.request_records
+    assert_equal 1, records.length
+    dimensions = create_expected_dimensions(log)
+    verify_requested_record(records[0], time, dimensions)
+  end
+
+  test 'single record(empty string)' do
+    d = create_driver
+    time = event_time('2021-01-01 01:00:00 UTC')
+    log = { 'key' => '' }
+
+    d.run(default_tag: 'test') do
+      d.feed(time, log)
+    end
+
+    records = @server.request_records
+    assert_equal 1, records.length
+
+    dimensions = create_expected_dimensions(log)
+
+    verify_requested_record(records[0], time, dimensions)
+  end
+
+  test 'single record(nil)' do
+    d = create_driver
+    time = event_time('2021-01-01 01:00:00 UTC')
+    log = { 'key' => nil }
+
+    d.run(default_tag: 'test') do
+      d.feed(time, log)
+    end
+
+    records = @server.request_records
+    assert_equal 1, records.length
+
+    dimensions = create_expected_dimensions(log)
+
     verify_requested_record(records[0], time, dimensions)
   end
 
@@ -34,92 +83,105 @@ class TimestreamOutputTest < Test::Unit::TestCase
     time2 = event_time('2021-01-02 02:00:00 UTC')
     time3 = event_time('2021-01-03 03:00:00 UTC')
 
+    log = create_log(key_base: KEY, value_base: VALUE, dimension_num: 3)
+
     d.run(default_tag: 'test') do
-      d.feed(time1, create_log(key_base: KEY, value_base: VALUE, dimension_num: 3))
-      d.feed(time2, create_log(key_base: KEY, value_base: VALUE, dimension_num: 3))
-      d.feed(time3, create_log(key_base: KEY, value_base: VALUE, dimension_num: 3))
+      d.feed(time1, log)
+      d.feed(time2, log)
+      d.feed(time3, log)
     end
 
     records = @server.request_records
     assert_equal 3, records.length
 
-    dimensions = create_dimensions(key_base: KEY, value_base: VALUE, dimension_num: 3)
+    dimensions = create_expected_dimensions(log)
     verify_requested_record(records[0], time1, dimensions)
     verify_requested_record(records[1], time2, dimensions)
     verify_requested_record(records[2], time3, dimensions)
   end
 
-  test 'multi records(not sorted by time)' do
+  test 'multiple records(not sorted by time)' do
     d = create_driver
     time1 = event_time('2021-01-01 01:00:00 UTC')
     time2 = event_time('2021-01-03 03:00:00 UTC')
     time3 = event_time('2021-01-02 02:00:00 UTC')
 
+    log = create_log(key_base: KEY, value_base: VALUE, dimension_num: 3)
+
     d.run(default_tag: 'test') do
-      d.feed(time1, create_log(key_base: KEY, value_base: VALUE, dimension_num: 3))
-      d.feed(time2, create_log(key_base: KEY, value_base: VALUE, dimension_num: 3))
-      d.feed(time3, create_log(key_base: KEY, value_base: VALUE, dimension_num: 3))
+      d.feed(time1, log)
+      d.feed(time2, log)
+      d.feed(time3, log)
     end
 
     records = @server.request_records
     assert_equal 3, records.length
 
-    dimensions = create_dimensions(key_base: KEY, value_base: VALUE, dimension_num: 3)
+    dimensions = create_expected_dimensions(log)
     verify_requested_record(records[0], time1, dimensions)
     verify_requested_record(records[1], time2, dimensions)
     verify_requested_record(records[2], time3, dimensions)
   end
 
-  test 'with measure' do
-    measure_name = 'key2'
-    d = create_driver(default_config +
-      "<measure>
-        name #{measure_name}
-        type VARCHAR
-      </measure>")
-    time = event_time('2021-01-01 11:11:11 UTC')
-    d.run(default_tag: 'test') do
-      d.feed(time, create_log(key_base: KEY, value_base: VALUE, dimension_num: 3))
-    end
-
-    records = @server.request_records
-    assert_equal 1, records.length
-
-    dimensions = create_dimensions(key_base: KEY, value_base: VALUE, dimension_num: 2)
-    verify_requested_record(records[0], time, dimensions,
-                            measure_name: measure_name, measure_value: 'value2')
+  test 'with measure(STRING)' do
+    measure_name = 'measure'
+    measure_value_type = 'VARCHAR'
+    measure_value = 'measure_value'
+    test_with_measure(measure_name, measure_value_type, measure_value)
   end
 
   test 'with measure(INTEGER)' do
     measure_name = 'measure'
     measure_value_type = 'INTEGER'
-    measure_value = '1000'
+    measure_value = 1000
+    test_with_measure(measure_name, measure_value_type, measure_value)
+  end
 
-    d = create_driver(default_config +
-      "<measure>
-        name #{measure_name}
-        type #{measure_value_type}
-      </measure>")
+  test 'with measure(VARCHAR - nil)' do
+    measure_name = 'measure'
+    measure_value_type = 'VARCHAR'
+    measure_value = nil
+    test_with_measure(measure_name, measure_value_type, measure_value)
+  end
 
-    time = event_time('2021-01-01 11:11:11 UTC')
-
-    d.run(default_tag: 'test') do
-      log = create_log(key_base: KEY, value_base: VALUE, dimension_num: 2)
-      log[measure_name] = measure_value
-      d.feed(time, log)
-    end
-
-    records = @server.request_records
-    assert_equal 1, records.length
-
-    dimensions = create_dimensions(key_base: KEY, value_base: VALUE, dimension_num: 2)
-    verify_requested_record(records[0], time, dimensions,
-                            measure_name: measure_name,
-                            measure_value: measure_value,
-                            measure_value_type: measure_value_type)
+  test 'with measure(INTEGER - nil)' do
+    measure_name = 'measure'
+    measure_value_type = 'INTEGER'
+    measure_value = nil
+    test_with_measure(measure_name, measure_value_type, measure_value)
   end
 
   private
+
+    # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/AbcSize
+    def test_with_measure(measure_name, measure_value_type, measure_value)
+      d = create_driver(default_config +
+        "<measure>
+          name #{measure_name}
+          type #{measure_value_type}
+        </measure>")
+
+      time = event_time('2021-01-01 11:11:11 UTC')
+      log = create_log(key_base: KEY, value_base: VALUE, dimension_num: 2)
+      log[measure_name] = measure_value
+
+      d.run(default_tag: 'test') do
+        d.feed(time, log)
+      end
+
+      records = @server.request_records
+      assert_equal 1, records.length
+
+      log.delete(measure_name)
+      dimensions = create_expected_dimensions(log)
+      verify_requested_record(records[0], time, dimensions,
+                              measure_name: measure_name,
+                              measure_value: measure_value.to_s,
+                              measure_value_type: measure_value_type)
+    end
+    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/MethodLength
 
     # rubocop: disable Metrics/ParameterLists
     def verify_requested_record(
@@ -147,12 +209,12 @@ class TimestreamOutputTest < Test::Unit::TestCase
       end
     end
 
-    def create_dimensions(key_base:, value_base:, dimension_num: 1)
-      (0...dimension_num).map do |i|
+    def create_expected_dimensions(hash)
+      hash.map do |k, v|
         {
           'DimensionValueType' => 'VARCHAR',
-          'Name' => "#{key_base}#{i}",
-          'Value' => "#{value_base}#{i}"
+          'Name' => k,
+          'Value' => v.to_s
         }
       end
     end
