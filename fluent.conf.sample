@@ -15,8 +15,9 @@
   # Amazon Timestream table name.
   table "sampleTable"
 
-  # AWS region.
-  region "us-east-1"
+  # AWS region. If not specified, search it from environment variable or aws config file.
+  # For more details see https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/TimestreamWrite/Client.html
+  # region "us-east-1"
 
   # <aws_credentials>
   #   access_key_id "XXXXXXXXX"
