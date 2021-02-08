@@ -15,14 +15,12 @@
   # Amazon Timestream table name.
   table "sampleTable"
 
-  # AWS region. If not specified, search it from environment variable or aws config file.
+  # AWS access key id, secret key, region.
+  # If not specified, search it from environment variable or aws config file.
   # For more details see https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/TimestreamWrite/Client.html
-  # region "us-east-1"
-
-  # <aws_credentials>
-  #   access_key_id "XXXXXXXXX"
-  #   secret_access_key "XXXXXXXXXX"
-  # </aws_credentials>
+  aws_key_id "XXXXXXXX"
+  aws_sec_key "XXXXXXXX"
+  region "us-east-1"
 
   # Specify which key should be 'measure'.
   # If not, plugin sends dummy measure and writes all keys and values as dimensions.
