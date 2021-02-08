@@ -11,4 +11,5 @@ You can install it as follows:
 Please refer to the [sample config file](https://github.com/StudistCorporation/fluent-plugin-timestream/blob/main/fluent.conf.sample)
 
 ## Note
-The plugin converts `nil` values in the log to empty string.
+The plugin converts `null` values in the log to empty string.  
+e.g. `{key_name: null}` => `{key_name: ""}`
