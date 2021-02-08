@@ -18,10 +18,11 @@
   # AWS region.
   region "us-east-1"
 
-  # <aws_credentials>
-  #   access_key_id "XXXXXXXXX"
-  #   secret_access_key "XXXXXXXXXX"
-  # </aws_credentials>
+  # AWS access key id.
+  aws_key_id "XXXXXXXX"
+
+  # AWS secret key.
+  aws_sec_key "XXXXXXXX"
 
   # Specify which key should be 'measure'.
   # If not, plugin sends dummy measure and writes all keys and values as dimensions.
