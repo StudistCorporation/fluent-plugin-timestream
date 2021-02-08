@@ -15,8 +15,8 @@ module Fluent
       config_param :aws_key_id, :string, secret: true, default: nil
       config_param :aws_sec_key, :string, secret: true, default: nil
 
-      config_param :database, :string
-      config_param :table, :string
+      config_param :database, :string, default: nil
+      config_param :table, :string, default: nil
       config_section :measure,
                      param_name: 'target_measure', required: false, multi: false do
         config_param :name, :string
@@ -33,6 +33,9 @@ module Fluent
         options[:endpoint] = @endpoint if @endpoint
         options[:ssl_verify_peer] = @ssl_verify_peer
         @client = Aws::TimestreamWrite::Client.new(options)
+
+        @database = ENV['AWS_TIMESTREAM_DATABASE']
+        @table = ENV['AWS_TIMESTREAM_TABLE']
       end
 
       def credential_options
