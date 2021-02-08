@@ -34,8 +34,8 @@ module Fluent
         options[:ssl_verify_peer] = @ssl_verify_peer
         @client = Aws::TimestreamWrite::Client.new(options)
 
-        @database = ENV['AWS_TIMESTREAM_DATABASE']
-        @table = ENV['AWS_TIMESTREAM_TABLE']
+        @database = ENV['AWS_TIMESTREAM_DATABASE'] if @database.nil?
+        @table = ENV['AWS_TIMESTREAM_TABLE'] if @table.nil?
       end
 
       def credential_options
