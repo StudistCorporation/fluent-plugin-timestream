@@ -10,11 +10,11 @@
   @type timestream
 
   # Amazon Timestream database name.
-  # If not specified, plugin use ENV['AWS_TIMESTREAM_DATABASE']
+  # If not specified, the AWS_TIMESTREAM_DATABASE environment variable will be used instead
   database "sampleDB"
 
   # Amazon Timestream table name.
-  # If not specified, plugin use ENV['AWS_TIMESTREAM_TABLE']
+  # If not specified, the AWS_TIMESTREAM_TABLE environment variable will be used instead
   table "sampleTable"
 
   # AWS region.
