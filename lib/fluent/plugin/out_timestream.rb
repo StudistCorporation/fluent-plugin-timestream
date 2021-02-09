@@ -10,7 +10,7 @@ module Fluent
     class TimestreamOutput < Fluent::Plugin::Output
       Fluent::Plugin.register_output('timestream', self)
 
-      config_param :region, :string
+      config_param :region, :string, default: nil
 
       config_param :aws_key_id, :string, secret: true, default: nil
       config_param :aws_sec_key, :string, secret: true, default: nil
@@ -29,7 +29,7 @@ module Fluent
       def configure(conf)
         super
         options = credential_options
-        options[:region] = @region
+        options[:region] = @region if @region
         options[:endpoint] = @endpoint if @endpoint
         options[:ssl_verify_peer] = @ssl_verify_peer
         @client = Aws::TimestreamWrite::Client.new(options)

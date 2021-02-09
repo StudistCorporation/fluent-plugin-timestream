@@ -17,14 +17,12 @@
   # If not specified, the AWS_TIMESTREAM_TABLE environment variable will be used instead
   table "sampleTable"
 
-  # AWS region.
-  region "us-east-1"
-
-  # AWS access key id.
+  # AWS access key id, secret key, region.
+  # If not specified, search it from environment variable or aws config file.
+  # For more details see https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/TimestreamWrite/Client.html
   aws_key_id "XXXXXXXX"
-
-  # AWS secret key.
   aws_sec_key "XXXXXXXX"
+  region "us-east-1"
 
   # Specify which key should be 'measure'.
   # If not, plugin sends dummy measure and writes all keys and values as dimensions.
@@ -39,7 +37,7 @@
 
   # 'chunk_limit_records' must be configured less or equal to 100.
   # If not, plugin may fails to write record.
-  # For now, Plugin sends records in buffer all at once.
+  # For now, plugin sends records in buffer all at once.
   # However Amazon Timestream currently accepts less or equal to 100 records.
   <buffer>
     chunk_limit_records 100
