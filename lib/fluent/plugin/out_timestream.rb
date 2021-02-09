@@ -10,16 +10,13 @@ module Fluent
     class TimestreamOutput < Fluent::Plugin::Output
       Fluent::Plugin.register_output('timestream', self)
 
-      config_param :region, :string
+      config_param :region, :string, default: nil
 
-      config_section :aws_credentials,
-                     param_name: 'aws_credentials', required: false, multi: false do
-        config_param :access_key_id, :string, secret: true
-        config_param :secret_access_key, :string, secret: true
-      end
+      config_param :aws_key_id, :string, secret: true, default: nil
+      config_param :aws_sec_key, :string, secret: true, default: nil
 
-      config_param :database, :string
-      config_param :table, :string
+      config_param :database, :string, default: nil
+      config_param :table, :string, default: nil
       config_section :measure,
                      param_name: 'target_measure', required: false, multi: false do
         config_param :name, :string
@@ -32,17 +29,20 @@ module Fluent
       def configure(conf)
         super
         options = credential_options
-        options[:region] = @region
+        options[:region] = @region if @region
         options[:endpoint] = @endpoint if @endpoint
         options[:ssl_verify_peer] = @ssl_verify_peer
         @client = Aws::TimestreamWrite::Client.new(options)
+
+        @database = ENV['AWS_TIMESTREAM_DATABASE'] if @database.nil?
+        @table = ENV['AWS_TIMESTREAM_TABLE'] if @table.nil?
       end
 
       def credential_options
-        if @aws_credentials
+        if @aws_key_id && @aws_sec_key
           {
-            access_key_id: @aws_credentials[:access_key_id],
-            secret_access_key: @aws_credentials[:secret_access_key]
+            access_key_id: @aws_key_id,
+            secret_access_key: @aws_sec_key
           }
         else
           {}
@@ -64,7 +64,7 @@ module Fluent
           time: time.to_s,
           time_unit: 'SECONDS',
           measure_name: measure[:name],
-          measure_value: measure[:value],
+          measure_value: measure[:value].to_s,
           measure_value_type: measure[:type]
         }
       end
@@ -73,7 +73,7 @@ module Fluent
         {
           dimension_value_type: 'VARCHAR',
           name: key,
-          value: value
+          value: value.to_s
         }
       end
 
