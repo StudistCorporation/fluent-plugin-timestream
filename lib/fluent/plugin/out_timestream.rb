@@ -64,7 +64,7 @@ module Fluent
           time: time.to_s,
           time_unit: 'SECONDS',
           measure_name: measure[:name],
-          measure_value: measure[:value],
+          measure_value: measure[:value].to_s,
           measure_value_type: measure[:type]
         }
       end
@@ -73,7 +73,7 @@ module Fluent
         {
           dimension_value_type: 'VARCHAR',
           name: key,
-          value: value
+          value: value.to_s
         }
       end
 
