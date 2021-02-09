@@ -15,6 +15,16 @@ class TimestreamOutputTest < Test::Unit::TestCase
     @server.start
   end
 
+  test 'get database name and table name from ENV' do
+    ENV['AWS_TIMESTREAM_DATABASE'] = 'TEST_DB'
+    ENV['AWS_TIMESTREAM_TABLE'] = 'TEST_TABLE'
+    d = create_driver('region "test"')
+    assert_equal 'TEST_DB', d.instance.database
+    assert_equal 'TEST_TABLE', d.instance.table
+    ENV.delete('AWS_TIMESTREAM_DATABASE')
+    ENV.delete('AWS_TIMESTREAM_TABLE')
+  end
+
   test 'single record' do
     d = create_driver
     time = event_time('2021-01-01 11:11:11 UTC')
