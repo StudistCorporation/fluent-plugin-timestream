@@ -16,4 +16,4 @@ e.g. `{key_name: null}` => `{key_name: ""}`
   
 When writing Timestream records, `TimeUnit` is always set to `SECONDS`  
   
-Configure multiple MeasureName is not supported.
+Configuring multiple `MeasureName`s is not supported.
