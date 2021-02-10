@@ -174,7 +174,6 @@ class TimestreamOutputTest < Test::Unit::TestCase
         table dummyTable
         endpoint https://localhost:#{@server.port}
         ssl_verify_peer false
-        chunk_limit records 2
       )
     end
 

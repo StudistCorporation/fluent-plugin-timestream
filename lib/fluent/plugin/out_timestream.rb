@@ -97,7 +97,7 @@ module Fluent
           timestream_records.push(create_timestream_record(dimensions, time, measure))
         end
 
-        log.info("write #{timestream_records.length} records")
+        log.info("read #{timestream_records.length} records from chunk")
         timestream_records
       end
 
