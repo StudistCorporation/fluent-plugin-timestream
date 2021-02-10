@@ -12,4 +12,8 @@ Please refer to the [sample config file](https://github.com/StudistCorporation/f
 
 ## Note
 The plugin converts `null` values in the log to empty string.  
-e.g. `{key_name: null}` => `{key_name: ""}`
+e.g. `{key_name: null}` => `{key_name: ""}`  
+  
+When write Timestream records, TimeUnit is always set `SECONDS`  
+  
+Configure multiple MeasureName is not supported.
