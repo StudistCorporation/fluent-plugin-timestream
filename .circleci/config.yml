@@ -10,6 +10,21 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Which bundler?
+          command: bundle -v
+      - ruby/bundle-install
+  test:
+    docker:
+      - image: circleci/ruby:2.6.3-stretch-node
+    steps:
+      - checkout
+      - run:
           name: Test
           command: rake test
-      - ruby/bundle-install
+workflows:
+  build_and_test:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
