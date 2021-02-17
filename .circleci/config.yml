@@ -18,9 +18,18 @@ jobs:
       - run:
           name: Which ruby?
           command: ruby -v
+      - restore_cache:
+          name: bundle install の結果を restore
+          keys:
+            - fluent-timestream-<< parameters.version >>
       - run:
           name: Bundle install
           command: bundle install
+      - save_cache:
+          name:  bundle install の結果を save
+          paths:
+            - /usr/local/bundle/gems/
+          key: fluent-timestream-<< parameters.version >>
       - run:
           name: Test
           command: rake test
