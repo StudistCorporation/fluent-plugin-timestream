@@ -8,7 +8,7 @@ jobs:
       version:
         type: string
     docker:
-      - image: circleci/ruby:<< parameters.version >>-stretch-node
+      - image: circleci/ruby:<< parameters.version >>-buster-node
     executor: ruby/default
     steps:
       - checkout
@@ -27,4 +27,4 @@ workflows:
       - build_and_test:
           matrix:
             parameters:
-              version: ["2.6.3", "2.6.5"]
+              version: ["2.6.3", "2.6.5", "2.6", "2.7", "3"]
