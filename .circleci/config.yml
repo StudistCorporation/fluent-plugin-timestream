@@ -21,7 +21,6 @@ jobs:
       - restore_cache:
           name: bundle install の結果を restore
           keys:
-            - fluent-timestream-<< parameters.version >>-{{ checksum "Gemfile.lock" }}
             - fluent-timestream-<< parameters.version >>
       - run:
           name: Bundle install
