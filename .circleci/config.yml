@@ -16,6 +16,9 @@ jobs:
           name: Which bundler?
           command: bundle -v
       - run:
+          name: Which ruby?
+          command: ruby -v
+      - run:
           name: Bundle install
           command: bundle install
       - run:
