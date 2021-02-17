@@ -25,6 +25,6 @@ workflows:
   build_and_test:
     jobs:
       - build_and_test:
-        matrix:
-        parameters:
-          version: ["2.6.3", "2.6.5"]
+          matrix:
+            parameters:
+              version: ["2.6.3", "2.6.5"]
