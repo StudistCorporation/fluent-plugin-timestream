@@ -18,6 +18,10 @@ jobs:
       - run:
           name: Which ruby?
           command: ruby -v
+      - restore_cache:
+          name: bundle install の結果を restore
+          keys:
+            - v1-fluent-timestream-<< parameters.version >>
       - run:
           name: Bundle install
           command: bundle install
@@ -28,7 +32,7 @@ jobs:
             - /usr/local/bundle/extensions
             - /usr/local/bundle/gems
             - /usr/local/bundle/specifications
-          key: fluent-timestream-<< parameters.version >>-{{ checksum "Gemfile.lock" }}
+          key: v1-fluent-timestream-<< parameters.version >>-{{ checksum "Gemfile.lock" }}
       - run:
           name: Test
           command: rake test
