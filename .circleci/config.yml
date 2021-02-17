@@ -28,7 +28,7 @@ jobs:
       - save_cache:
           name:  bundle install の結果を save
           paths:
-            - /usr/local/bundle/gems/
+            - /usr/local/bundle/
           key: fluent-timestream-<< parameters.version >>
       - run:
           name: Test
