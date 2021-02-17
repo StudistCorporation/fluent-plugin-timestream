@@ -21,6 +21,7 @@ jobs:
       - restore_cache:
           name: bundle install の結果を restore
           keys:
+            - fluent-timestream-<< parameters.version >>-{{ checksum "Gemfile.lock" }}
             - fluent-timestream-<< parameters.version >>
       - run:
           name: Bundle install
@@ -29,7 +30,7 @@ jobs:
           name:  bundle install の結果を save
           paths:
             - /usr/local/bundle/
-          key: fluent-timestream-<< parameters.version >>
+          key: fluent-timestream-<< parameters.version >>-{{ checksum "Gemfile.lock" }}
       - run:
           name: Test
           command: rake test
