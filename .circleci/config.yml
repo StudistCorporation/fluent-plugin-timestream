@@ -4,8 +4,11 @@ orbs:
 
 jobs:
   build_and_test:
+    parameters:
+      version:
+        type: string
     docker:
-      - image: circleci/ruby:2.6.3-stretch-node
+      - image: circleci/ruby:<< parameters.version >>-stretch-node
     executor: ruby/default
     steps:
       - checkout
@@ -21,4 +24,7 @@ jobs:
 workflows:
   build_and_test:
     jobs:
-      - build_and_test
+      - build_and_test:
+        matrix:
+        parameters:
+          version: ["2.6.3", "2.6.5"]
