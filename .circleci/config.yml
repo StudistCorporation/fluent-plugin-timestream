@@ -1,0 +1,42 @@
+version: 2.1
+orbs:
+  ruby: circleci/ruby@0.1.2 
+
+jobs:
+  build_and_test:
+    parameters:
+      ruby-version:
+        type: string
+    docker:
+      - image: circleci/ruby:<< parameters.ruby-version >>-buster
+    executor: ruby/default
+    steps:
+      - checkout
+      - run:
+          name: Execution environments
+          command: echo "Running tests with ruby $(ruby -v), bundler $(bundle -v)"
+      - restore_cache:
+          name: Restore installed gems
+          keys:
+            - v1-fluent-timestream-<< parameters.ruby-version >>
+      - run:
+          name: Bundle install
+          command: bundle install
+      - save_cache:
+          name:  Save installed gems
+          paths:
+            - /usr/local/bundle/bin
+            - /usr/local/bundle/extensions
+            - /usr/local/bundle/gems
+            - /usr/local/bundle/specifications
+          key: v1-fluent-timestream-<< parameters.ruby-version >>-{{ checksum "Gemfile.lock" }}
+      - run:
+          name: Test
+          command: rake test
+workflows:
+  build_and_test:
+    jobs:
+      - build_and_test:
+          matrix:
+            parameters:
+              ruby-version: ["2.6.3", "2.6.5", "2.6", "2.7", "3"]

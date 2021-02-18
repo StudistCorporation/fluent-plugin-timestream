@@ -231,6 +231,8 @@ class TimestreamOutputTest < Test::Unit::TestCase
 
     def default_config
       %(
+        aws_key_id XXXXX
+        aws_sec_key XXXXX
         region dummy
         database dummyDB
         table dummyTable
