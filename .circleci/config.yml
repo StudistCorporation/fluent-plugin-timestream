@@ -8,7 +8,7 @@ jobs:
       ruby-version:
         type: string
     docker:
-      - image: circleci/ruby:<< parameters.ruby-version >>-buster-node
+      - image: circleci/ruby:<< parameters.ruby-version >>-buster
     executor: ruby/default
     steps:
       - checkout
