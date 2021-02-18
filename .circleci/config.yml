@@ -5,7 +5,7 @@ orbs:
 jobs:
   build_and_test:
     parameters:
-      version:
+      ruby-version:
         type: string
     docker:
       - image: circleci/ruby:<< parameters.ruby-version >>-buster-node
