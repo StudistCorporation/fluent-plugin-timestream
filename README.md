@@ -1,4 +1,6 @@
 # fluent-plugin-timestream
+[![Status](https://circleci.com/gh/StudistCorporation/fluent-plugin-timestream.svg?style=shield)](https://circleci.com/gh/StudistCorporation/fluent-plugin-timestream)
+
 Fluentd output plugin for Amazon Timestream.
 
 
