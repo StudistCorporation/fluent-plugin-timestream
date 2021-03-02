@@ -56,7 +56,7 @@ class TimestreamOutputTest < Test::Unit::TestCase
   test 'single record(empty string)' do
     d = create_driver
     time = event_time('2021-01-01 01:00:00 UTC')
-    log = { 'key' => '' }
+    log = { 'key1' => '', 'key2' => 'val' }
 
     d.run(default_tag: 'test') do
       d.feed(time, log)
@@ -65,7 +65,7 @@ class TimestreamOutputTest < Test::Unit::TestCase
     records = @server.request_records
     assert_equal 1, records.length
 
-    dimensions = create_expected_dimensions(log)
+    dimensions = create_expected_dimensions({ 'key2' => 'val' })
 
     verify_requested_record(records[0], time, dimensions)
   end
@@ -73,7 +73,7 @@ class TimestreamOutputTest < Test::Unit::TestCase
   test 'single record(nil)' do
     d = create_driver
     time = event_time('2021-01-01 01:00:00 UTC')
-    log = { 'key' => nil }
+    log = { 'key1' => nil, 'key2' => 'val' }
 
     d.run(default_tag: 'test') do
       d.feed(time, log)
@@ -82,7 +82,7 @@ class TimestreamOutputTest < Test::Unit::TestCase
     records = @server.request_records
     assert_equal 1, records.length
 
-    dimensions = create_expected_dimensions(log)
+    dimensions = create_expected_dimensions({ 'key2' => 'val' })
 
     verify_requested_record(records[0], time, dimensions)
   end
@@ -209,7 +209,7 @@ class TimestreamOutputTest < Test::Unit::TestCase
       assert_equal measure_value, record['MeasureValue']
       assert_equal measure_value_type, record['MeasureValueType']
 
-      assert_equal record['Dimensions'], dimensions
+      assert_equal dimensions, record['Dimensions']
     end
     # rubocop: enable Metrics/ParameterLists
 

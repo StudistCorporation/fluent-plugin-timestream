@@ -70,22 +70,25 @@ module Fluent
       end
 
       def create_timestream_dimension(key, value)
+        value = value.to_s
+        return nil if value.empty?
+
         {
           dimension_value_type: 'VARCHAR',
           name: key,
-          value: value.to_s
+          value: value
         }
       end
 
       def create_timestream_dimensions_and_measure(record)
-        dimensions = []
         measure = {}
-        record.each do |k, v|
+        dimensions = record.each_with_object([]) do |(k, v), result|
           if @target_measure && k == @target_measure[:name]
             measure = { name: k, value: v, type: @target_measure[:type] }
             next
           end
-          dimensions.push(create_timestream_dimension(k, v))
+          dimension = create_timestream_dimension(k, v)
+          result.push(dimension) unless dimension.nil?
         end
         return [dimensions, measure]
       end

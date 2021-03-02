@@ -13,8 +13,8 @@ You can install it as follows:
 Please refer to the [sample config file](https://github.com/StudistCorporation/fluent-plugin-timestream/blob/main/fluent.conf.sample)
 
 ## Note
-The plugin converts `null` values in the log to empty string.  
-e.g. `{key_name: null}` => `{key_name: ""}`  
+The plugin ignores `null` and empty string values in the log.  
+e.g. `{key1: null, key2: "value", key3: ""}` => `{key2: "value"}`  
   
 When writing Timestream records, `TimeUnit` is always set to `SECONDS`  
   
