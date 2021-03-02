@@ -6,6 +6,14 @@ require_relative 'timestream/version'
 
 module Fluent
   module Plugin
+    # Error for Invalid measure
+    class MeasureHasEmptyValueError < StandardError
+      def initialize(key_name = '')
+        super("measure has empty value. key name: #{key_name}")
+      end
+    end
+
+    # rubocop: disable Metrics/ClassLength
     # Fluent plugin for Amazon Timestream
     class TimestreamOutput < Fluent::Plugin::Output
       Fluent::Plugin.register_output('timestream', self)
@@ -64,13 +72,16 @@ module Fluent
           time: time.to_s,
           time_unit: 'SECONDS',
           measure_name: measure[:name],
-          measure_value: measure[:value].to_s,
+          measure_value: measure[:value],
           measure_value_type: measure[:type]
         }
       end
 
       def create_timestream_dimension(key, value)
         value = value.to_s
+
+        # Timestream does not accept empty string.
+        # Ignore this dimension.
         return nil if value.empty?
 
         {
@@ -80,11 +91,25 @@ module Fluent
         }
       end
 
+      def create_timestream_measure(key, value)
+        value = value.to_s
+
+        # Timestream does not accept empty string.
+        # By raising error, ignore entire record.
+        raise MeasureHasEmptyValueError, key if value.empty?
+
+        {
+          name: key,
+          value: value,
+          type: @target_measure[:type]
+        }
+      end
+
       def create_timestream_dimensions_and_measure(record)
         measure = {}
         dimensions = record.each_with_object([]) do |(k, v), result|
           if @target_measure && k == @target_measure[:name]
-            measure = { name: k, value: v, type: @target_measure[:type] }
+            measure = create_timestream_measure(k, v)
             next
           end
           dimension = create_timestream_dimension(k, v)
@@ -98,6 +123,9 @@ module Fluent
         chunk.each do |time, record|
           dimensions, measure = create_timestream_dimensions_and_measure(record)
           timestream_records.push(create_timestream_record(dimensions, time, measure))
+        rescue MeasureHasEmptyValueError => e
+          log.warn("ignore record (#{e})")
+          next
         end
 
         log.info("read #{timestream_records.length} records from chunk")
@@ -105,16 +133,24 @@ module Fluent
       end
 
       def write(chunk)
+        records = create_timestream_records(chunk)
+        write_records(records)
+      end
+
+      def write_records(records)
+        return if records.empty?
         @client.write_records(
           database_name: @database,
           table_name: @table,
-          records: create_timestream_records(chunk)
+          records: records
         )
       rescue Aws::TimestreamWrite::Errors::RejectedRecordsException => e
         log.error(e.rejected_records)
       rescue StandardError => e
         log.error(e.message)
       end
+
     end
+    # rubocop: enable Metrics/ClassLength
   end
 end

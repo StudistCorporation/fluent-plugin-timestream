@@ -151,17 +151,54 @@ class TimestreamOutputTest < Test::Unit::TestCase
     measure_name = 'measure'
     measure_value_type = 'VARCHAR'
     measure_value = nil
-    test_with_measure(measure_name, measure_value_type, measure_value)
+    test_with_measure_empty_value(measure_name, measure_value_type, measure_value)
+  end
+
+  test 'with measure(VARCHAR - empty)' do
+    measure_name = 'measure'
+    measure_value_type = 'VARCHAR'
+    measure_value = ''
+    test_with_measure_empty_value(measure_name, measure_value_type, measure_value)
   end
 
   test 'with measure(INTEGER - nil)' do
     measure_name = 'measure'
     measure_value_type = 'INTEGER'
     measure_value = nil
-    test_with_measure(measure_name, measure_value_type, measure_value)
+    test_with_measure_empty_value(measure_name, measure_value_type, measure_value)
   end
 
   private
+
+    # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/AbcSize
+    def test_with_measure_empty_value(measure_name, measure_value_type, measure_value)
+      d = create_driver(default_config +
+        "<measure>
+          name #{measure_name}
+          type #{measure_value_type}
+        </measure>")
+
+      time1 = event_time('2021-01-01 11:11:11 UTC')
+      time2 = event_time('2021-01-02 11:11:11 UTC')
+      log1 = create_log(key_base: KEY, value_base: VALUE, dimension_num: 2)
+      log1[measure_name] = measure_value
+      log2 = create_log(key_base: KEY, value_base: VALUE, dimension_num: 2)
+
+      d.run(default_tag: 'test') do
+        # log1 will be ignored because it has empty measure value
+        d.feed(time1, log1)
+        d.feed(time2, log2)
+      end
+
+      records = @server.request_records
+      assert_equal 1, records.length
+
+      dimensions = create_expected_dimensions(log2)
+      verify_requested_record(records[0], time2, dimensions)
+    end
+    # rubocop:enable Metrics/MethodLength
+    # rubocop:enable Metrics/AbcSize
 
     # rubocop:disable Metrics/MethodLength
     # rubocop:disable Metrics/AbcSize
