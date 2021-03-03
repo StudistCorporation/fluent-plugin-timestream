@@ -133,6 +133,26 @@ class TimestreamOutputTest < Test::Unit::TestCase
     verify_requested_record(records[2], time3, dimensions)
   end
 
+  test 'multiple records(ignore no dimensions record)' do
+    d = create_driver
+    time1 = event_time('2021-01-01 01:00:00 UTC')
+    time2 = event_time('2021-01-03 03:00:00 UTC')
+
+    log1 = { 'key1' => '' }
+    log2 = { 'key1' => 'value' }
+
+    d.run(default_tag: 'test') do
+      d.feed(time1, log1)
+      d.feed(time2, log2)
+    end
+
+    records = @server.request_records
+    assert_equal 1, records.length
+
+    dimensions = create_expected_dimensions(log2)
+    verify_requested_record(records[0], time2, dimensions)
+  end
+
   test 'with measure(STRING)' do
     measure_name = 'measure'
     measure_value_type = 'VARCHAR'

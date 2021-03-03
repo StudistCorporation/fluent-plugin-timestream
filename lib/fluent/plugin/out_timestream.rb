@@ -6,10 +6,17 @@ require_relative 'timestream/version'
 
 module Fluent
   module Plugin
-    # Error for Invalid measure
+    # Raise when measure has empty value
     class MeasureHasEmptyValueError < StandardError
       def initialize(key_name = '')
         super("measure has empty value. key name: #{key_name}")
+      end
+    end
+
+    # Raise when record has no dimensions
+    class NoDimensionsError < StandardError
+      def initialize
+        super('record has no dimensions.')
       end
     end
 
@@ -66,6 +73,7 @@ module Fluent
       end
 
       def create_timestream_record(dimensions, time, measure)
+        raise NoDimensionsError if dimensions.empty?
         measure = { name: '-', value: '-', type: 'VARCHAR' } if measure.empty?
         {
           dimensions: dimensions,
@@ -123,7 +131,7 @@ module Fluent
         chunk.each do |time, record|
           dimensions, measure = create_timestream_dimensions_and_measure(record)
           timestream_records.push(create_timestream_record(dimensions, time, measure))
-        rescue MeasureHasEmptyValueError => e
+        rescue MeasureHasEmptyValueError, NoDimensionsError => e
           log.warn("ignore record (#{e})")
           next
         end
