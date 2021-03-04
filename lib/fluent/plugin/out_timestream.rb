@@ -6,23 +6,24 @@ require_relative 'timestream/version'
 
 module Fluent
   module Plugin
-    # Raise when measure has empty value
-    class MeasureHasEmptyValueError < StandardError
-      def initialize(key_name = '')
-        super("measure has empty value. key name: #{key_name}")
-      end
-    end
-
-    # Raise when record has no dimensions
-    class NoDimensionsError < StandardError
-      def initialize
-        super('record has no dimensions.')
-      end
-    end
-
     # rubocop: disable Metrics/ClassLength
     # Fluent plugin for Amazon Timestream
     class TimestreamOutput < Fluent::Plugin::Output
+
+      # Raise when measure has empty value
+      class EmptyValueError < StandardError
+        def initialize(key_name = '')
+          super("measure has empty value. key name: #{key_name}")
+        end
+      end
+
+      # Raise when record has no dimensions
+      class NoDimensionsError < StandardError
+        def initialize
+          super('record has no dimensions.')
+        end
+      end
+
       Fluent::Plugin.register_output('timestream', self)
 
       config_param :region, :string, default: nil
@@ -104,7 +105,7 @@ module Fluent
 
         # Timestream does not accept empty string.
         # By raising error, ignore entire record.
-        raise MeasureHasEmptyValueError, key if value.empty?
+        raise EmptyValueError, key if value.empty?
 
         {
           name: key,
@@ -131,17 +132,18 @@ module Fluent
         chunk.each do |time, record|
           dimensions, measure = create_timestream_dimensions_and_measure(record)
           timestream_records.push(create_timestream_record(dimensions, time, measure))
-        rescue MeasureHasEmptyValueError, NoDimensionsError => e
+        rescue EmptyValueError, NoDimensionsError => e
           log.warn("ignore record (#{e})")
+          log.warn("ignored record details: #{record}")
           next
         end
 
-        log.info("read #{timestream_records.length} records from chunk")
         timestream_records
       end
 
       def write(chunk)
         records = create_timestream_records(chunk)
+        log.info("read #{records.length} records from chunk")
         write_records(records)
       end
 
