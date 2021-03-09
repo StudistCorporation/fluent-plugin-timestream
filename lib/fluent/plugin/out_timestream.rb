@@ -6,8 +6,24 @@ require_relative 'timestream/version'
 
 module Fluent
   module Plugin
+    # rubocop: disable Metrics/ClassLength
     # Fluent plugin for Amazon Timestream
     class TimestreamOutput < Fluent::Plugin::Output
+
+      # Raise when measure has empty value
+      class EmptyValueError < StandardError
+        def initialize(key_name = '')
+          super("measure has empty value. key name: #{key_name}")
+        end
+      end
+
+      # Raise when record has no dimensions
+      class NoDimensionsError < StandardError
+        def initialize
+          super('record has no dimensions.')
+        end
+      end
+
       Fluent::Plugin.register_output('timestream', self)
 
       config_param :region, :string, default: nil
@@ -58,34 +74,55 @@ module Fluent
       end
 
       def create_timestream_record(dimensions, time, measure)
+        raise NoDimensionsError if dimensions.empty?
         measure = { name: '-', value: '-', type: 'VARCHAR' } if measure.empty?
         {
           dimensions: dimensions,
           time: time.to_s,
           time_unit: 'SECONDS',
           measure_name: measure[:name],
-          measure_value: measure[:value].to_s,
+          measure_value: measure[:value],
           measure_value_type: measure[:type]
         }
       end
 
       def create_timestream_dimension(key, value)
+        value = value.to_s
+
+        # Timestream does not accept empty string.
+        # Ignore this dimension.
+        return nil if value.empty?
+
         {
           dimension_value_type: 'VARCHAR',
           name: key,
-          value: value.to_s
+          value: value
+        }
+      end
+
+      def create_timestream_measure(key, value)
+        value = value.to_s
+
+        # Timestream does not accept empty string.
+        # By raising error, ignore entire record.
+        raise EmptyValueError, key if value.empty?
+
+        {
+          name: key,
+          value: value,
+          type: @target_measure[:type]
         }
       end
 
       def create_timestream_dimensions_and_measure(record)
-        dimensions = []
         measure = {}
-        record.each do |k, v|
+        dimensions = record.each_with_object([]) do |(k, v), result|
           if @target_measure && k == @target_measure[:name]
-            measure = { name: k, value: v, type: @target_measure[:type] }
+            measure = create_timestream_measure(k, v)
             next
           end
-          dimensions.push(create_timestream_dimension(k, v))
+          dimension = create_timestream_dimension(k, v)
+          result.push(dimension) unless dimension.nil?
         end
         return [dimensions, measure]
       end
@@ -95,23 +132,35 @@ module Fluent
         chunk.each do |time, record|
           dimensions, measure = create_timestream_dimensions_and_measure(record)
           timestream_records.push(create_timestream_record(dimensions, time, measure))
+        rescue EmptyValueError, NoDimensionsError => e
+          log.warn("ignored record due to (#{e})")
+          log.debug("ignored record details: #{record}")
+          next
         end
 
-        log.info("read #{timestream_records.length} records from chunk")
         timestream_records
       end
 
       def write(chunk)
+        records = create_timestream_records(chunk)
+        log.info("read #{records.length} records from chunk")
+        write_records(records)
+      end
+
+      def write_records(records)
+        return if records.empty?
         @client.write_records(
           database_name: @database,
           table_name: @table,
-          records: create_timestream_records(chunk)
+          records: records
         )
       rescue Aws::TimestreamWrite::Errors::RejectedRecordsException => e
         log.error(e.rejected_records)
       rescue StandardError => e
         log.error(e.message)
       end
+
     end
+    # rubocop: enable Metrics/ClassLength
   end
 end
