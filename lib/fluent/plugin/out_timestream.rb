@@ -133,8 +133,8 @@ module Fluent
           dimensions, measure = create_timestream_dimensions_and_measure(record)
           timestream_records.push(create_timestream_record(dimensions, time, measure))
         rescue EmptyValueError, NoDimensionsError => e
-          log.warn("ignore record (#{e})")
-          log.warn("ignored record details: #{record}")
+          log.warn("ignored record due to (#{e})")
+          log.debug("ignored record details: #{record}")
           next
         end
 
