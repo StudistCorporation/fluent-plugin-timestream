@@ -25,6 +25,17 @@ class TimestreamOutputTest < Test::Unit::TestCase
     ENV.delete('AWS_TIMESTREAM_TABLE')
   end
 
+  test 'invalid time_unit' do
+    invalid_time_unit = 'invalid_value'
+    config = %(
+      region test
+      time_unit #{invalid_time_unit}
+    )
+    create_driver(config)
+  rescue Fluent::ConfigError => e
+    assert_equal e.message, "Invalid time_unit: #{invalid_time_unit}"
+  end
+
   test 'single record(STRING)' do
     d = create_driver
     time = event_time('2021-01-01 11:11:11 UTC')
@@ -188,6 +199,18 @@ class TimestreamOutputTest < Test::Unit::TestCase
     test_with_measure_empty_value(measure_name, measure_value_type, measure_value)
   end
 
+  test 'time_unit is MILLISECONDS' do
+    test_xxx_seconds('MILLISECONDS', 1_620_000_000_123)
+  end
+
+  test 'time_unit is MICROSECONDS' do
+    test_xxx_seconds('MICROSECONDS', 1_620_000_000_123_456)
+  end
+
+  test 'time_unit is NANOSECONDS' do
+    test_xxx_seconds('NANOSECONDS', 1_620_000_000_123_456_789)
+  end
+
   private
 
     # rubocop:disable Metrics/MethodLength
@@ -248,6 +271,31 @@ class TimestreamOutputTest < Test::Unit::TestCase
                               measure_value_type: measure_value_type)
     end
     # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/MethodLength
+
+    # rubocop:disable Metrics/MethodLength
+    def test_xxx_seconds(time_unit, time_xxx_seconds)
+      time_key = 'xxx_seconds'
+      config = %(
+        #{default_config}
+        time_unit #{time_unit}
+        time_key #{time_key}
+      )
+      d = create_driver config
+      time = 1_620_000_000
+      log = { 'key' => 'value', "#{time_key}": time_xxx_seconds }
+
+      d.run(default_tag: 'test') do
+        d.feed(time, log)
+      end
+
+      records = @server.request_records
+      assert_equal 1, records.length
+
+      dimensions = create_expected_dimensions({ 'key' => 'value' })
+      verify_requested_record(records[0], time_xxx_seconds, dimensions,
+                              time_unit: time_unit)
+    end
     # rubocop:enable Metrics/MethodLength
 
     # rubocop: disable Metrics/ParameterLists

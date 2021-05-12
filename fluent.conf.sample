@@ -1,10 +1,31 @@
 <source>
   @type tail
-  format ltsv
+  format json
   path /path/to/sample.log
   pos_file /tmp/sample.pos
   tag "sample.log"
+  # set keep_time_key true if need to convert time.
+  # keep_time_key true
 </source>
+
+# If more than seconds accuracy is needed,
+# convert time and configure time_unit and time_key.
+#
+# e.g.)
+# If record is as follows:
+# {"key": "value", "time":1620000000.123456789}
+#
+# convert it to: 
+# when time unit is MILLISECONDS: 1620000000123
+# when time unit is MICROSECONDS: 1620000000123456
+# when time unit is NANOSECONDS:  1620000000123456789
+# <filter sample.log>
+  # @type record_transformer
+  # enable_ruby true
+  # <record>
+  #   milliseconds_time ${(record["time"].to_f * 1000).to_i}
+  # </record>
+#</filter>
 
 <match sample.log>
   @type timestream
@@ -23,6 +44,17 @@
   aws_key_id "XXXXXXXX"
   aws_sec_key "XXXXXXXX"
   region "us-east-1"
+
+  # If more than seconds accuracy is needed,
+  # convert time and configure time_unit and time_key.
+  # time_unit: The granularity of the timestamp unit. 
+  #            This value is used for 'TimeUnit' in Timestream record
+  #            Default value: SECONDS
+  #            Valid values: SECONDS MILLISECONDS MICROSECONDS NANOSECONDS
+  # time_key:  Specify record key which contains integer epoch time corresponding to time_unit
+  #            Plugin uses specified epoch time for 'Time' in Timestream record and does not send it as dimension
+  # time_unit "MILLISECONDS"
+  # time_key "milliseconds_time"
 
   # Specify which key should be 'measure'.
   # If not, plugin sends dummy measure and writes all keys and values as dimensions.
