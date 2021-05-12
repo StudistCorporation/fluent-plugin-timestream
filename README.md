@@ -19,7 +19,7 @@ Please refer to the [sample config file](https://github.com/StudistCorporation/f
 The plugin ignores dimension when it has `null` or empty string value.  
 e.g. `{dimension1: null, dimension2: "value", dimension3: ""}` => `{dimension2: "value"}`
 
-The plugin ignores record when it has no dimensions.
+The plugin ignores record when it has no dimensions.  
 e.g. `{dimension1: null, dimension2: "", measure: "value"}` => ignores this record
 
 The plugin ignores record when measure specified in the config has `null` or empty value.  
