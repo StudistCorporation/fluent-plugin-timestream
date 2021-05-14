@@ -10,6 +10,14 @@ module Fluent
     # Fluent plugin for Amazon Timestream
     class TimestreamOutput < Fluent::Plugin::Output
 
+      VALID_TIME_UNIT =
+        %w[
+          SECONDS
+          MILLISECONDS
+          MICROSECONDS
+          NANOSECONDS
+        ].freeze
+
       # Raise when measure has empty value
       class EmptyValueError < StandardError
         def initialize(key_name = '')
@@ -38,6 +46,8 @@ module Fluent
         config_param :name, :string
         config_param :type, :string
       end
+      config_param :time_unit, :string, default: 'SECONDS'
+      config_param :time_key, default: nil
 
       config_param :endpoint, :string, default: nil
       config_param :ssl_verify_peer, :bool, default: true
@@ -52,6 +62,7 @@ module Fluent
 
         @database = ENV['AWS_TIMESTREAM_DATABASE'] if @database.nil?
         @table = ENV['AWS_TIMESTREAM_TABLE'] if @table.nil?
+        validate_time_unit
       end
 
       def credential_options
@@ -63,6 +74,11 @@ module Fluent
         else
           {}
         end
+      end
+
+      def validate_time_unit
+        return if VALID_TIME_UNIT.include?(@time_unit)
+        raise Fluent::ConfigError, "Invalid time_unit: #{@time_unit}"
       end
 
       def formatted_to_msgpack_binary
@@ -79,7 +95,7 @@ module Fluent
         {
           dimensions: dimensions,
           time: time.to_s,
-          time_unit: 'SECONDS',
+          time_unit: @time_unit,
           measure_name: measure[:name],
           measure_value: measure[:value],
           measure_value_type: measure[:type]
@@ -127,9 +143,11 @@ module Fluent
         return [dimensions, measure]
       end
 
+      # rubocop:disable Metrics/MethodLength
       def create_timestream_records(chunk)
         timestream_records = []
         chunk.each do |time, record|
+          time = record.delete(@time_key) unless @time_key.nil?
           dimensions, measure = create_timestream_dimensions_and_measure(record)
           timestream_records.push(create_timestream_record(dimensions, time, measure))
         rescue EmptyValueError, NoDimensionsError => e
@@ -140,6 +158,7 @@ module Fluent
 
         timestream_records
       end
+      # rubocop:enable Metrics/MethodLength
 
       def write(chunk)
         records = create_timestream_records(chunk)
