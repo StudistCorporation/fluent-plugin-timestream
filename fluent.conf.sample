@@ -25,7 +25,8 @@
   # <record>
   #   milliseconds_time ${(record["time"].to_f * 1000).to_i}
   # </record>
-  # Remove time key or plugin sends it as a dimension and fails to write.
+  # Remove time key or plugin sends it as a dimension.
+  # Especially, if time key name is 'time', the plugin fails to write record because 'time' is reserved keyword.
   # remove_keys time
 #</filter>
 
