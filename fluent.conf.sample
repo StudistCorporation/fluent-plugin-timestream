@@ -25,6 +25,8 @@
   # <record>
   #   milliseconds_time ${(record["time"].to_f * 1000).to_i}
   # </record>
+  # Remove time key or plugin sends it as a dimension and fails to write.
+  # remove_keys time
 #</filter>
 
 <match sample.log>
