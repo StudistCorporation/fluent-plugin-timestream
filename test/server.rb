@@ -20,7 +20,6 @@ class TestServer
     @server.mount_proc '/' do |req, res|
       @request_body = req.body
       res.status = 200
-      res.body = 'RESPONSE'
     end
 
     @request_body = ''
