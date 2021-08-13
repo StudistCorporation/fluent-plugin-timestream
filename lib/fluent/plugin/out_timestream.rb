@@ -175,8 +175,6 @@ module Fluent
         )
       rescue Aws::TimestreamWrite::Errors::RejectedRecordsException => e
         log.error(e.rejected_records)
-      rescue StandardError => e
-        log.error(e.message)
       end
 
     end
