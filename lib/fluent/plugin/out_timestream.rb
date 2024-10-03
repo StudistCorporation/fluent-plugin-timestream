@@ -42,7 +42,7 @@ module Fluent
       config_param :database, :string, default: nil
       config_param :table, :string, default: nil
       config_section :measure,
-                     param_name: 'target_measure', required: false, multi: false do
+                     param_name: 'target_measures', required: false, multi: true do
         config_param :name, :string
         config_param :type, :string
       end
@@ -89,17 +89,14 @@ module Fluent
         [time, record].to_msgpack
       end
 
-      def create_timestream_record(dimensions, time, measure)
+      def create_timestream_record(dimensions, time, measures)
         raise NoDimensionsError if dimensions.empty?
-        measure = { name: '-', value: '-', type: 'VARCHAR' } if measure.empty?
+
         {
           dimensions: dimensions,
           time: time.to_s,
-          time_unit: @time_unit,
-          measure_name: measure[:name],
-          measure_value: measure[:value],
-          measure_value_type: measure[:type]
-        }
+          time_unit: @time_unit
+        }.merge(build_measure_payload(measures))
       end
 
       def create_timestream_dimension(key, value)
@@ -123,24 +120,30 @@ module Fluent
         # By raising error, ignore entire record.
         raise EmptyValueError, key if value.empty?
 
+        measure_config = @target_measures.find { |m| m[:name] == key }
+        return nil unless measure_config
+
         {
           name: key,
           value: value,
-          type: @target_measure[:type]
+          type: measure_config[:type]
         }
       end
 
-      def create_timestream_dimensions_and_measure(record)
-        measure = {}
-        dimensions = record.each_with_object([]) do |(k, v), result|
-          if @target_measure && k == @target_measure[:name]
-            measure = create_timestream_measure(k, v)
-            next
+      def create_timestream_dimensions_and_measures(record)
+        record.each_with_object([[], []]) do |(key, value), (dimensions, measures)|
+          if measure_field?(key)
+            measure = create_timestream_measure(key, value)
+            measures << measure if measure
+          else
+            dimension = create_timestream_dimension(key, value)
+            dimensions << dimension if dimension
           end
-          dimension = create_timestream_dimension(k, v)
-          result.push(dimension) unless dimension.nil?
         end
-        return [dimensions, measure]
+      end
+
+      def measure_field?(key)
+        @target_measures.any? { |m| m[:name] == key }
       end
 
       # rubocop:disable Metrics/MethodLength
@@ -148,8 +151,8 @@ module Fluent
         timestream_records = []
         chunk.each do |time, record|
           time = record.delete(@time_key) unless @time_key.nil?
-          dimensions, measure = create_timestream_dimensions_and_measure(record)
-          timestream_records.push(create_timestream_record(dimensions, time, measure))
+          dimensions, measures = create_timestream_dimensions_and_measures(record)
+          timestream_records.push(create_timestream_record(dimensions, time, measures))
         rescue EmptyValueError, NoDimensionsError => e
           log.warn("ignored record due to (#{e})")
           log.debug("ignored record details: #{record}")
@@ -175,6 +178,30 @@ module Fluent
         )
       rescue Aws::TimestreamWrite::Errors::RejectedRecordsException => e
         log.error(e.rejected_records)
+      end
+
+      def build_measure_payload(measures)
+        measures.size > 1 ? multi_payload(measures) : single_payload(measures)
+      end
+
+      def multi_payload(measures)
+        {
+          measure_value_type: 'MULTI',
+          measure_values: measures
+        }
+      end
+
+      def single_payload(measures)
+        measure = measures.empty? ? dummy_measure : measures.first
+        {
+          measure_name: measure[:name],
+          measure_value: measure[:value],
+          measure_value_type: measure[:type]
+        }
+      end
+
+      def dummy_measure
+        { name: '-', value: '-', type: 'VARCHAR' }.freeze
       end
 
     end
