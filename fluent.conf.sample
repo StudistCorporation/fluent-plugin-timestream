@@ -59,14 +59,19 @@
   # time_unit "MILLISECONDS"
   # time_key "milliseconds_time"
 
-  # Specify which key should be 'measure'.
+  # Specify which key(s) should be 'measure(s)'.
   # If not, plugin sends dummy measure and writes all keys and values as dimensions.
   # Dummy measure is as follows:
   #   MeasureName: '-'
   #   MeasureValue: '-'
   #   MeasureValueType: 'VARCHAR'
+  # You can specify multiple measures for a single record.
   #<measure>
-  #  name "measureNameXXX"
+  #  name "measureName1XXX"
+  #  type "DOUBLE"
+  #</measure>
+  #<measure>
+  #  name "measureName2XXX"
   #  type "VARCHAR"
   #</measure>
 

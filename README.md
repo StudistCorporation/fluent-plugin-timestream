@@ -24,5 +24,3 @@ e.g. `{dimension1: null, dimension2: "", measure: "value"}` => ignores this reco
 
 The plugin ignores record when measure specified in the config has `null` or empty value.  
 e.g. `{dimension1: "value", measure: ""}` => ignores this record
-
-Configuring multiple `MeasureName`s is not supported.
