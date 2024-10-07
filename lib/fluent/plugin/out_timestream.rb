@@ -114,27 +114,25 @@ module Fluent
         }
       end
 
-      def create_timestream_measure(key, value)
+      def create_timestream_measure(key, value, type)
         value = value.to_s
 
         # Timestream does not accept empty string.
         # By raising error, ignore entire record.
         raise EmptyValueError, key if value.empty?
 
-        measure_config = @target_measures.find { |m| m[:name] == key }
-        return nil unless measure_config
-
         {
           name: key,
           value: value,
-          type: measure_config[:type]
+          type: type
         }
       end
 
       def create_timestream_dimensions_and_measures(record)
         record.each_with_object([[], []]) do |(key, value), (dimensions, measures)|
-          if measure_field?(key)
-            measure = create_timestream_measure(key, value)
+          measure_type = measure_types[key]
+          if measure_type
+            measure = create_timestream_measure(key, value, measure_type)
             measures << measure if measure
           else
             dimension = create_timestream_dimension(key, value)
@@ -143,8 +141,8 @@ module Fluent
         end
       end
 
-      def measure_field?(key)
-        @target_measures.any? { |m| m[:name] == key }
+      def measure_types
+        @measure_types ||= @target_measures.to_h { |m| [m[:name], m[:type]] }
       end
 
       # rubocop:disable Metrics/MethodLength
