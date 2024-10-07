@@ -18,6 +18,8 @@ module Fluent
           NANOSECONDS
         ].freeze
 
+      DUMMY_MEASURE = { name: '-', value: '-', type: 'VARCHAR' }.freeze
+
       # Raise when measure has empty value
       class EmptyValueError < StandardError
         def initialize(key_name = '')
@@ -91,7 +93,6 @@ module Fluent
 
       def create_timestream_record(dimensions, time, measures)
         raise NoDimensionsError if dimensions.empty?
-
         {
           dimensions: dimensions,
           time: time.to_s,
@@ -195,16 +196,12 @@ module Fluent
       end
 
       def single_measure_payload(measures)
-        measure = measures.empty? ? dummy_measure : measures.first
+        measure = measures.empty? ? DUMMY_MEASURE : measures.first
         {
           measure_name: measure[:name],
           measure_value: measure[:value],
           measure_value_type: measure[:type]
         }
-      end
-
-      def dummy_measure
-        { name: '-', value: '-', type: 'VARCHAR' }.freeze
       end
 
     end
