@@ -95,8 +95,9 @@ module Fluent
         {
           dimensions: dimensions,
           time: time.to_s,
-          time_unit: @time_unit
-        }.merge(build_measure_payload(measures))
+          time_unit: @time_unit,
+          **build_measure_payload(measures)
+        }
       end
 
       def create_timestream_dimension(key, value)
@@ -181,17 +182,21 @@ module Fluent
       end
 
       def build_measure_payload(measures)
-        measures.size > 1 ? multi_payload(measures) : single_payload(measures)
+        if measures.size > 1
+          multi_measure_payload(measures)
+        else
+          single_measure_payload(measures)
+        end
       end
 
-      def multi_payload(measures)
+      def multi_measure_payload(measures)
         {
           measure_value_type: 'MULTI',
           measure_values: measures
         }
       end
 
-      def single_payload(measures)
+      def single_measure_payload(measures)
         measure = measures.empty? ? dummy_measure : measures.first
         {
           measure_name: measure[:name],
