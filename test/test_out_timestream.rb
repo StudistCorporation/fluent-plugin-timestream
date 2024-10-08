@@ -215,9 +215,8 @@ class TimestreamOutputTest < Test::Unit::TestCase
           type #{measure2_value_type}
         </measure>")
 
-    dimension = { KEY => VALUE }
     log = {
-      **dimension,
+      KEY => VALUE,
       measure1_name => 'measure',
       measure2_name => 1000
     }
@@ -231,7 +230,7 @@ class TimestreamOutputTest < Test::Unit::TestCase
     records = @server.request_records
     assert_equal 1, records.length
 
-    expected_dimensions = create_expected_dimensions(dimension)
+    expected_dimensions = create_expected_dimensions({ KEY => VALUE })
     expected_measure_values = [
       { 'Name' => measure1_name, 'Value' => 'measure', 'Type' => measure1_value_type },
       { 'Name' => measure2_name, 'Value' => '1000', 'Type' => measure2_value_type }
@@ -257,14 +256,13 @@ class TimestreamOutputTest < Test::Unit::TestCase
           type #{measure2_value_type}
         </measure>")
 
-    dimension = { KEY => VALUE }
     log1 = {
-      **dimension,
+      KEY => VALUE,
       measure1_name => '',
       measure2_name => 1000
     }
     log2 = {
-      **dimension,
+      KEY => VALUE,
       measure1_name => 'measure',
       measure2_name => 1000
     }
@@ -281,7 +279,7 @@ class TimestreamOutputTest < Test::Unit::TestCase
     records = @server.request_records
     assert_equal 1, records.length
 
-    expected_dimensions = create_expected_dimensions(dimension)
+    expected_dimensions = create_expected_dimensions({ KEY => VALUE })
     expected_measure_values = [
       { 'Name' => measure1_name, 'Value' => 'measure', 'Type' => measure1_value_type },
       { 'Name' => measure2_name, 'Value' => '1000', 'Type' => measure2_value_type }
@@ -307,14 +305,13 @@ class TimestreamOutputTest < Test::Unit::TestCase
           type #{measure2_value_type}
         </measure>")
 
-    dimension = { KEY => VALUE }
     multi_measure_log = {
-      **dimension,
+      KEY => VALUE,
       measure1_name => 'measure',
       measure2_name => 1000
     }
     single_measure_log = {
-      **dimension,
+      KEY => VALUE,
       measure1_name => 'measure'
     }
 
