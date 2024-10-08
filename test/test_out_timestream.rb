@@ -60,6 +60,7 @@ class TimestreamOutputTest < Test::Unit::TestCase
 
     records = @server.request_records
     assert_equal 1, records.length
+
     dimensions = create_expected_dimensions(log)
     verify_requested_record(records[0], time, dimensions)
   end
@@ -200,6 +201,7 @@ class TimestreamOutputTest < Test::Unit::TestCase
   end
 
   test 'with multiple measures (VARCHAR and BIGINT)' do
+    multi_measure_name = 'multi_measure'
     measure1_name = 'measure_varchar'
     measure1_value_type = 'VARCHAR'
     measure2_name = 'measure_bigint'
@@ -207,12 +209,16 @@ class TimestreamOutputTest < Test::Unit::TestCase
 
     d = create_driver(default_config +
         "<measure>
-          name #{measure1_name}
-          type #{measure1_value_type}
-        </measure>
-        <measure>
-          name #{measure2_name}
-          type #{measure2_value_type}
+          name #{multi_measure_name}
+          type 'MULTI'
+          <measure>
+            name #{measure1_name}
+            type #{measure1_value_type}
+          </measure>
+          <measure>
+            name #{measure2_name}
+            type #{measure2_value_type}
+          </measure>
         </measure>")
 
     log = {
@@ -237,10 +243,12 @@ class TimestreamOutputTest < Test::Unit::TestCase
     ]
 
     verify_requested_record(records[0], time, expected_dimensions,
+                            measure_name: multi_measure_name,
                             measure_values: expected_measure_values)
   end
 
   test 'with multiple measures (ignore record which has empty measure value)' do
+    multi_measure_name = 'multi_measure'
     measure1_name = 'measure_varchar'
     measure1_value_type = 'VARCHAR'
     measure2_name = 'measure_bigint'
@@ -248,12 +256,16 @@ class TimestreamOutputTest < Test::Unit::TestCase
 
     d = create_driver(default_config +
         "<measure>
-          name #{measure1_name}
-          type #{measure1_value_type}
-        </measure>
-        <measure>
-          name #{measure2_name}
-          type #{measure2_value_type}
+          name #{multi_measure_name}
+          type 'MULTI'
+          <measure>
+            name #{measure1_name}
+            type #{measure1_value_type}
+          </measure>
+          <measure>
+            name #{measure2_name}
+            type #{measure2_value_type}
+          </measure>
         </measure>")
 
     log1 = {
@@ -286,10 +298,12 @@ class TimestreamOutputTest < Test::Unit::TestCase
     ]
 
     verify_requested_record(records[0], time2, expected_dimensions,
+                            measure_name: multi_measure_name,
                             measure_values: expected_measure_values)
   end
 
   test 'with mixed single and multi measure records' do
+    multi_measure_name = 'multi_measure'
     measure1_name = 'measure_varchar'
     measure1_value_type = 'VARCHAR'
     measure2_name = 'measure_bigint'
@@ -297,12 +311,16 @@ class TimestreamOutputTest < Test::Unit::TestCase
 
     d = create_driver(default_config +
         "<measure>
-          name #{measure1_name}
-          type #{measure1_value_type}
-        </measure>
-        <measure>
-          name #{measure2_name}
-          type #{measure2_value_type}
+          name #{multi_measure_name}
+          type 'MULTI'
+          <measure>
+            name #{measure1_name}
+            type #{measure1_value_type}
+          </measure>
+          <measure>
+            name #{measure2_name}
+            type #{measure2_value_type}
+          </measure>
         </measure>")
 
     multi_measure_log = {
@@ -327,16 +345,16 @@ class TimestreamOutputTest < Test::Unit::TestCase
     assert_equal 2, records.length
 
     multi_measure_record = records[0]
-    assert_equal nil, multi_measure_record['MeasureName']
+    assert_equal multi_measure_name, multi_measure_record['MeasureName']
     assert_equal nil, multi_measure_record['MeasureValue']
     assert_equal 'MULTI', multi_measure_record['MeasureValueType']
     assert_equal 2, multi_measure_record['MeasureValues'].length
 
     single_measure_record = records[1]
-    assert_equal measure1_name, single_measure_record['MeasureName']
-    assert_equal 'measure', single_measure_record['MeasureValue']
-    assert_equal measure1_value_type, single_measure_record['MeasureValueType']
-    assert_equal nil, single_measure_record['MeasureValues']
+    assert_equal multi_measure_name, single_measure_record['MeasureName']
+    assert_equal nil, single_measure_record['MeasureValue']
+    assert_equal 'MULTI', single_measure_record['MeasureValueType']
+    assert_equal 1, single_measure_record['MeasureValues'].length
   end
 
   test 'time_unit is MILLISECONDS' do
@@ -430,6 +448,7 @@ class TimestreamOutputTest < Test::Unit::TestCase
       end
 
       records = @server.request_records
+
       assert_equal 1, records.length
 
       dimensions = create_expected_dimensions({ 'key' => 'value' })
@@ -453,17 +472,15 @@ class TimestreamOutputTest < Test::Unit::TestCase
     )
       assert_equal time.to_s, record['Time']
       assert_equal time_unit, record['TimeUnit']
+      assert_equal measure_name, record['MeasureName']
+      assert_equal measure_values, record['MeasureValues']
 
       if measure_values
-        assert_equal nil, record['MeasureName']
         assert_equal nil, record['MeasureValue']
         assert_equal 'MULTI', record['MeasureValueType']
-        assert_equal measure_values, record['MeasureValues']
       else
-        assert_equal measure_name, record['MeasureName']
         assert_equal measure_value, record['MeasureValue']
         assert_equal measure_value_type, record['MeasureValueType']
-        assert_equal nil, record['MeasureValues']
       end
 
       assert_equal dimensions, record['Dimensions']

@@ -44,9 +44,14 @@ module Fluent
       config_param :database, :string, default: nil
       config_param :table, :string, default: nil
       config_section :measure,
-                     param_name: 'target_measures', required: false, multi: true do
+                     param_name: 'target_measure', required: false, multi: false do
         config_param :name, :string
         config_param :type, :string
+        config_section :measure,
+                       param_name: 'multi_measures', required: false, multi: true do
+          config_param :name, :string
+          config_param :type, :string
+        end
       end
       config_param :time_unit, :string, default: 'SECONDS'
       config_param :time_key, default: nil
@@ -143,7 +148,15 @@ module Fluent
       end
 
       def measure_types
-        @measure_types ||= @target_measures.to_h { |m| [m[:name], m[:type]] }
+        @measure_types ||= if multi_measure?
+                             @target_measure&.multi_measures.to_h { |m| [m.name, m.type] }
+                           else
+                             { @target_measure&.name => @target_measure&.type }
+                           end
+      end
+
+      def multi_measure?
+        @target_measure&.type == 'MULTI' && @target_measure.multi_measures&.any?
       end
 
       # rubocop:disable Metrics/MethodLength
@@ -181,7 +194,7 @@ module Fluent
       end
 
       def build_measure_payload(measures)
-        if measures.size > 1
+        if multi_measure?
           multi_measure_payload(measures)
         else
           single_measure_payload(measures)
@@ -190,6 +203,7 @@ module Fluent
 
       def multi_measure_payload(measures)
         {
+          measure_name: @target_measure.name,
           measure_value_type: 'MULTI',
           measure_values: measures
         }
