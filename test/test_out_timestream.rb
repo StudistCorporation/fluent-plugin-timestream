@@ -199,6 +199,149 @@ class TimestreamOutputTest < Test::Unit::TestCase
     test_with_measure_empty_value(measure_name, measure_value_type, measure_value)
   end
 
+  test 'with multiple measures (VARCHAR and BIGINT)' do
+    measure1_name = 'measure_varchar'
+    measure1_value_type = 'VARCHAR'
+    measure2_name = 'measure_bigint'
+    measure2_value_type = 'BIGINT'
+
+    d = create_driver(default_config +
+        "<measure>
+          name #{measure1_name}
+          type #{measure1_value_type}
+        </measure>
+        <measure>
+          name #{measure2_name}
+          type #{measure2_value_type}
+        </measure>")
+
+    dimension = { KEY => VALUE }
+    log = {
+      **dimension,
+      measure1_name => 'measure',
+      measure2_name => 1000
+    }
+
+    time = event_time('2021-01-01 11:11:11 UTC')
+
+    d.run(default_tag: 'test') do
+      d.feed(time, log)
+    end
+
+    records = @server.request_records
+    assert_equal 1, records.length
+
+    expected_dimensions = create_expected_dimensions(dimension)
+    expected_measure_values = [
+      { 'Name' => measure1_name, 'Value' => 'measure', 'Type' => measure1_value_type },
+      { 'Name' => measure2_name, 'Value' => '1000', 'Type' => measure2_value_type }
+    ]
+
+    verify_requested_record(records[0], time, expected_dimensions,
+                            measure_values: expected_measure_values)
+  end
+
+  test 'with multiple measures (ignore record which has empty measure value)' do
+    measure1_name = 'measure_varchar'
+    measure1_value_type = 'VARCHAR'
+    measure2_name = 'measure_bigint'
+    measure2_value_type = 'BIGINT'
+
+    d = create_driver(default_config +
+        "<measure>
+          name #{measure1_name}
+          type #{measure1_value_type}
+        </measure>
+        <measure>
+          name #{measure2_name}
+          type #{measure2_value_type}
+        </measure>")
+
+    dimension = { KEY => VALUE }
+    log1 = {
+      **dimension,
+      measure1_name => '',
+      measure2_name => 1000
+    }
+    log2 = {
+      **dimension,
+      measure1_name => 'measure',
+      measure2_name => 1000
+    }
+
+    time1 = event_time('2021-01-01 11:11:11 UTC')
+    time2 = event_time('2021-01-01 11:11:12 UTC')
+
+    d.run(default_tag: 'test') do
+      # log1 will be ignored because it has empty measure value
+      d.feed(time1, log1)
+      d.feed(time2, log2)
+    end
+
+    records = @server.request_records
+    assert_equal 1, records.length
+
+    expected_dimensions = create_expected_dimensions(dimension)
+    expected_measure_values = [
+      { 'Name' => measure1_name, 'Value' => 'measure', 'Type' => measure1_value_type },
+      { 'Name' => measure2_name, 'Value' => '1000', 'Type' => measure2_value_type }
+    ]
+
+    verify_requested_record(records[0], time2, expected_dimensions,
+                            measure_values: expected_measure_values)
+  end
+
+  test 'with mixed single and multi measure records' do
+    measure1_name = 'measure_varchar'
+    measure1_value_type = 'VARCHAR'
+    measure2_name = 'measure_bigint'
+    measure2_value_type = 'BIGINT'
+
+    d = create_driver(default_config +
+        "<measure>
+          name #{measure1_name}
+          type #{measure1_value_type}
+        </measure>
+        <measure>
+          name #{measure2_name}
+          type #{measure2_value_type}
+        </measure>")
+
+    dimension = { KEY => VALUE }
+    multi_measure_log = {
+      **dimension,
+      measure1_name => 'measure',
+      measure2_name => 1000
+    }
+    single_measure_log = {
+      **dimension,
+      measure1_name => 'measure'
+    }
+
+    time1 = event_time('2021-01-01 11:11:11 UTC')
+    time2 = event_time('2021-01-01 11:11:12 UTC')
+
+    d.run(default_tag: 'test') do
+      d.feed(time1, multi_measure_log)
+      d.feed(time2, single_measure_log)
+    end
+
+    records = @server.request_records
+    assert_equal 2, records.length
+
+    multi_measure_record = records[0]
+    assert_equal nil, multi_measure_record['MeasureName']
+    assert_equal nil, multi_measure_record['MeasureValue']
+    assert_equal 'MULTI', multi_measure_record['MeasureValueType']
+    assert_equal 2, multi_measure_record['MeasureValues'].length
+
+    single_measure_record = records[1]
+    assert_equal measure1_name, single_measure_record['MeasureName']
+    assert_equal 'measure', single_measure_record['MeasureValue']
+    assert_equal measure1_value_type, single_measure_record['MeasureValueType']
+    assert_equal nil, single_measure_record['MeasureValues']
+  end
+
   test 'time_unit is MILLISECONDS' do
     test_xxx_seconds('MILLISECONDS', 1_620_000_000_123)
   end
@@ -298,6 +441,8 @@ class TimestreamOutputTest < Test::Unit::TestCase
     end
     # rubocop:enable Metrics/MethodLength
 
+    # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/AbcSize
     # rubocop: disable Metrics/ParameterLists
     def verify_requested_record(
       record,
@@ -306,16 +451,28 @@ class TimestreamOutputTest < Test::Unit::TestCase
       time_unit: 'SECONDS',
       measure_name: '-',
       measure_value: '-',
-      measure_value_type: 'VARCHAR'
+      measure_value_type: 'VARCHAR',
+      measure_values: nil
     )
       assert_equal time.to_s, record['Time']
       assert_equal time_unit, record['TimeUnit']
-      assert_equal measure_name, record['MeasureName']
-      assert_equal measure_value, record['MeasureValue']
-      assert_equal measure_value_type, record['MeasureValueType']
+
+      if measure_values
+        assert_equal nil, record['MeasureName']
+        assert_equal nil, record['MeasureValue']
+        assert_equal 'MULTI', record['MeasureValueType']
+        assert_equal measure_values, record['MeasureValues']
+      else
+        assert_equal measure_name, record['MeasureName']
+        assert_equal measure_value, record['MeasureValue']
+        assert_equal measure_value_type, record['MeasureValueType']
+        assert_equal nil, record['MeasureValues']
+      end
 
       assert_equal dimensions, record['Dimensions']
     end
+    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/MethodLength
     # rubocop: enable Metrics/ParameterLists
 
     def create_log(key_base:, value_base:, dimension_num: 1)
