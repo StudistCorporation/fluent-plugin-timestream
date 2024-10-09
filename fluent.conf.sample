@@ -65,14 +65,25 @@
   #   MeasureName: '-'
   #   MeasureValue: '-'
   #   MeasureValueType: 'VARCHAR'
-  # You can specify multiple measures for a single record.
+  # You can specify single measure or multi-measures.
+  # Single measure example:
   #<measure>
-  #  name "measureName1XXX"
-  #  type "DOUBLE"
-  #</measure>
-  #<measure>
-  #  name "measureName2XXX"
+  #  name "measureNameXXX"
   #  type "VARCHAR"
+  #</measure>
+  #
+  # Multi-measure example:
+  #<measure>
+  #  name "multiMeasureNameXXX"
+  #  type "MULTI"
+  #  <measure>
+  #    name "measureName1XXX"
+  #    type "VARCHAR"
+  #  </measure>
+  #  <measure>
+  #    name "measureName2XXX"
+  #    type "BIGINT"
+  #  </measure>
   #</measure>
 
   # 'chunk_limit_records' must be configured less or equal to 100.

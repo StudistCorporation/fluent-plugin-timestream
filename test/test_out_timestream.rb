@@ -60,7 +60,6 @@ class TimestreamOutputTest < Test::Unit::TestCase
 
     records = @server.request_records
     assert_equal 1, records.length
-
     dimensions = create_expected_dimensions(log)
     verify_requested_record(records[0], time, dimensions)
   end
