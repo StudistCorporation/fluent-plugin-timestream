@@ -345,17 +345,24 @@ class TimestreamOutputTest < Test::Unit::TestCase
     records = @server.request_records
     assert_equal 2, records.length
 
-    multi_measure_record = records[0]
-    assert_equal multi_measure_name, multi_measure_record['MeasureName']
-    assert_equal nil, multi_measure_record['MeasureValue']
-    assert_equal 'MULTI', multi_measure_record['MeasureValueType']
-    assert_equal 2, multi_measure_record['MeasureValues'].length
+    expected_dimensions = create_expected_dimensions({ KEY => VALUE })
 
-    single_measure_record = records[1]
-    assert_equal multi_measure_name, single_measure_record['MeasureName']
-    assert_equal nil, single_measure_record['MeasureValue']
-    assert_equal 'MULTI', single_measure_record['MeasureValueType']
-    assert_equal 1, single_measure_record['MeasureValues'].length
+    expected_measure_values1 = [
+      { 'Name' => measure1_name, 'Value' => 'measure', 'Type' => measure1_value_type },
+      { 'Name' => measure2_name, 'Value' => '1000', 'Type' => measure2_value_type }
+    ]
+    verify_requested_record(records[0], time1, expected_dimensions,
+                            measure_name: multi_measure_name, measure_value: nil,
+                            measure_value_type: 'MULTI',
+                            measure_values: expected_measure_values1)
+
+    expected_measure_values2 = [
+      { 'Name' => measure1_name, 'Value' => 'measure', 'Type' => measure1_value_type }
+    ]
+    verify_requested_record(records[1], time2, expected_dimensions,
+                            measure_name: multi_measure_name, measure_value: nil,
+                            measure_value_type: 'MULTI',
+                            measure_values: expected_measure_values2)
   end
 
   test 'time_unit is MILLISECONDS' do
