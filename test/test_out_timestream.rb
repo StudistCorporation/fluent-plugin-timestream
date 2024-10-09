@@ -242,7 +242,8 @@ class TimestreamOutputTest < Test::Unit::TestCase
     ]
 
     verify_requested_record(records[0], time, expected_dimensions,
-                            measure_name: multi_measure_name,
+                            measure_name: multi_measure_name, measure_value: nil,
+                            measure_value_type: 'MULTI',
                             measure_values: expected_measure_values)
   end
 
@@ -297,7 +298,8 @@ class TimestreamOutputTest < Test::Unit::TestCase
     ]
 
     verify_requested_record(records[0], time2, expected_dimensions,
-                            measure_name: multi_measure_name,
+                            measure_name: multi_measure_name, measure_value: nil,
+                            measure_value_type: 'MULTI',
                             measure_values: expected_measure_values)
   end
 
@@ -447,7 +449,6 @@ class TimestreamOutputTest < Test::Unit::TestCase
       end
 
       records = @server.request_records
-
       assert_equal 1, records.length
 
       dimensions = create_expected_dimensions({ 'key' => 'value' })
@@ -456,8 +457,6 @@ class TimestreamOutputTest < Test::Unit::TestCase
     end
     # rubocop:enable Metrics/MethodLength
 
-    # rubocop:disable Metrics/MethodLength
-    # rubocop:disable Metrics/AbcSize
     # rubocop: disable Metrics/ParameterLists
     def verify_requested_record(
       record,
@@ -472,20 +471,12 @@ class TimestreamOutputTest < Test::Unit::TestCase
       assert_equal time.to_s, record['Time']
       assert_equal time_unit, record['TimeUnit']
       assert_equal measure_name, record['MeasureName']
+      assert_equal measure_value, record['MeasureValue']
+      assert_equal measure_value_type, record['MeasureValueType']
       assert_equal measure_values, record['MeasureValues']
-
-      if measure_values
-        assert_equal nil, record['MeasureValue']
-        assert_equal 'MULTI', record['MeasureValueType']
-      else
-        assert_equal measure_value, record['MeasureValue']
-        assert_equal measure_value_type, record['MeasureValueType']
-      end
 
       assert_equal dimensions, record['Dimensions']
     end
-    # rubocop:enable Metrics/AbcSize
-    # rubocop:enable Metrics/MethodLength
     # rubocop: enable Metrics/ParameterLists
 
     def create_log(key_base:, value_base:, dimension_num: 1)

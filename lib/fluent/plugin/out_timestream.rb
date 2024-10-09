@@ -148,15 +148,17 @@ module Fluent
       end
 
       def measure_types
-        @measure_types ||= if multi_measure?
-                             @target_measure&.multi_measures.to_h { |m| [m.name, m.type] }
+        @measure_types ||= if @target_measure.nil?
+                             {}
+                           elsif multi_measure?
+                             @target_measure.multi_measures.to_h { |m| [m.name, m.type] }
                            else
-                             { @target_measure&.name => @target_measure&.type }
+                             { @target_measure.name => @target_measure.type }
                            end
       end
 
       def multi_measure?
-        @target_measure&.type == 'MULTI' && @target_measure.multi_measures&.any?
+        @target_measure&.type == 'MULTI'
       end
 
       # rubocop:disable Metrics/MethodLength
