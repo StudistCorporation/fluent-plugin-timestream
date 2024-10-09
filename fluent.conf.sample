@@ -59,18 +59,22 @@
   # time_unit "MILLISECONDS"
   # time_key "milliseconds_time"
 
-  # Specify which key(s) should be 'measure(s)'.
+  # Specify which key should be 'measure'.
   # If not, plugin sends dummy measure and writes all keys and values as dimensions.
   # Dummy measure is as follows:
   #   MeasureName: '-'
   #   MeasureValue: '-'
   #   MeasureValueType: 'VARCHAR'
-  # You can specify single measure or multi-measures.
+  #
   # Single measure example:
   #<measure>
   #  name "measureNameXXX"
   #  type "VARCHAR"
   #</measure>
+  #
+  # To specify multiple measures, the parent measure must have type "MULTI" and contain nested measure definitions.
+  # For more details about multi-measure records in Timestream, see:
+  # https://docs.aws.amazon.com/timestream/latest/developerguide/writes.html
   #
   # Multi-measure example:
   #<measure>
