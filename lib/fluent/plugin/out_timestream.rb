@@ -196,7 +196,7 @@ module Fluent
       end
 
       def build_measure_payload(measures)
-        if multi_measure?
+        if multi_measure? && !measures.empty?
           multi_measure_payload(measures)
         else
           single_measure_payload(measures)

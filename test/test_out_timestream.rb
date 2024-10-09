@@ -365,6 +365,42 @@ class TimestreamOutputTest < Test::Unit::TestCase
                             measure_values: expected_measure_values2)
   end
 
+  test 'with multiple measures (send dummy measure when no measure values are given)' do
+    multi_measure_name = 'multi_measure'
+    measure1_name = 'measure_varchar'
+    measure1_value_type = 'VARCHAR'
+    measure2_name = 'measure_bigint'
+    measure2_value_type = 'BIGINT'
+
+    d = create_driver(default_config +
+        "<measure>
+          name #{multi_measure_name}
+          type 'MULTI'
+          <measure>
+            name #{measure1_name}
+            type #{measure1_value_type}
+          </measure>
+          <measure>
+            name #{measure2_name}
+            type #{measure2_value_type}
+          </measure>
+        </measure>")
+
+    log = { KEY => VALUE }
+    time = event_time('2021-01-01 11:11:11 UTC')
+
+    d.run(default_tag: 'test') do
+      d.feed(time, log)
+    end
+
+    records = @server.request_records
+    assert_equal 1, records.length
+
+    expected_dimensions = create_expected_dimensions({ KEY => VALUE })
+
+    verify_requested_record(records[0], time, expected_dimensions)
+  end
+
   test 'time_unit is MILLISECONDS' do
     test_xxx_seconds('MILLISECONDS', 1_620_000_000_123)
   end
