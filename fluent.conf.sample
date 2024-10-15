@@ -65,9 +65,29 @@
   #   MeasureName: '-'
   #   MeasureValue: '-'
   #   MeasureValueType: 'VARCHAR'
+  #
+  # Single measure example:
   #<measure>
   #  name "measureNameXXX"
   #  type "VARCHAR"
+  #</measure>
+  #
+  # To specify multiple measures, the parent measure must have type "MULTI" and contain nested measure definitions.
+  # For more details about multi-measure records in Timestream, see:
+  # https://docs.aws.amazon.com/timestream/latest/developerguide/writes.html
+  #
+  # Multi-measure example:
+  #<measure>
+  #  name "multiMeasureNameXXX"
+  #  type "MULTI"
+  #  <measure>
+  #    name "measureName1XXX"
+  #    type "VARCHAR"
+  #  </measure>
+  #  <measure>
+  #    name "measureName2XXX"
+  #    type "BIGINT"
+  #  </measure>
   #</measure>
 
   # 'chunk_limit_records' must be configured less or equal to 100.
